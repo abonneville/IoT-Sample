@@ -38,6 +38,8 @@
 #include "stm32l4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "usbd_cdc.h"
+#include "syscall.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,7 +77,7 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN EV */
-
+extern USBD_HandleTypeDef hUsbDeviceFS;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -194,10 +196,16 @@ void TIM2_IRQHandler(void)
 void OTG_FS_IRQHandler(void)
 {
   /* USER CODE BEGIN OTG_FS_IRQn 0 */
+  USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
+  uint32_t preTxState = hcdc->TxState;
 
   /* USER CODE END OTG_FS_IRQn 0 */
   HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
+  uint32_t postTxState = hcdc->TxState;
+  if ((preTxState == 1) && (postTxState == 0)) {
+	  SYS_CDC_TxCompleteIsr();
+  }
 
   /* USER CODE END OTG_FS_IRQn 1 */
 }

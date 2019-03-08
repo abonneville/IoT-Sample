@@ -4,6 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>FreeRTOS</project>
+		<project>HAL-Extension</project>
 		<project>STM32CubeMX</project>
 	</projects>
 	<buildSpec>

@@ -1,6 +1,7 @@
 
-#include <iostream>
+//#include <iostream>
 #include <string>
+#include <cstdio>
 
 //#include "main.hpp"
 #include "main.h"
@@ -19,8 +20,12 @@
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
+char buf[BUFSIZ * 8];
+
 
 /* Private function prototypes -----------------------------------------------*/
+extern "C" int _write(int file, char *ptr, int len);
+
 using namespace cpp_freertos;
 using namespace std;
 
@@ -44,6 +49,7 @@ class TestThread : public Thread {
 */
 
         	// ResetDelayUntil();
+        	uint8_t randomArray[] = " - USB Large Message";
 
             while (true) {
 /*
@@ -71,11 +77,65 @@ class TestThread : public Thread {
 
 */
 
-                DelayUntil(1000);
+//                DelayUntil(1000);
 
             	GPIOB->ODR ^= GPIO_ODR_OD14;
-            	cout << "Hello world - " << Ticks::GetTicks() << "\r" << endl;
+
+            	_write(0, buf, sizeof(buf)); // send a really big random buffer out the USB port
+
+/*
+            	for (int index = 0; index < 10; index++)
+            	{
+                	printf("Message burst - %u - %lu \n", index, Ticks::GetTicks());
+            	}
+            	printf("\n");
+*/
+/*
+            	for (int index = 0; index < 10; index++)
+            	{
+                	cout << "Message burst - " << index << " - " << Ticks::GetTicks() << endl;
+            	}
+            	cout << endl;
+*/
+/*
+            	cout << Ticks::GetTicks();
+            	for (uint32_t index = 0; index < 50; index++)
+            	{
+                	cout << randomArray;
+            	}
+            	cout << endl;
+
+            	cout << Ticks::GetTicks() << endl;
+
+*/
+/*
+            	printf("%lu", Ticks::GetTicks());
+            	for (uint32_t i = 0; i < 50; i++)
+            	{
+					for (uint32_t index = 0; index < sizeof(randomArray) - 1; index++)
+					{
+						printf("%c", randomArray[index]);
+					}
+            	}
+            	printf("\n");
+            	fflush(stdout);
+*/
+/*
+            	printf("%lu\n", Ticks::GetTicks());
+            	fflush(stdout);
+
+            	printf("%lu\n", Ticks::GetTicks());
+            	fflush(stdout);
+*/
+//            	printf("Hello world - %lu \n", Ticks::GetTicks());
+//            	printf("Second Msg. - %lu \n\n", Ticks::GetTicks());
+//            	fflush(stdout);
+
+//            	cout << "Hello world - " << Ticks::GetTicks() << endl;
+//            	cout << "Second message " << endl;
+//
 //            	cerr << "Hello world - " << Ticks::GetTicks() << "\r" << endl;
+//            	clog << "Hello world - " << Ticks::GetTicks() << "\r" << endl;
 
 
 
@@ -100,6 +160,10 @@ class TestThread : public Thread {
   */
 int main(void)
 {
+	// User allocated buffer to streaming messages over USB, flushing is manually controlled
+	setbuf(stdout, buf);
+
+
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
