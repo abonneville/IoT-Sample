@@ -9,6 +9,7 @@
 #define SYSCALL_H_
 
 void SYS_CDC_TxCompleteIsr(void);
+void SYS_CDC_RxMessageIsr(uint32_t length);
 
 
 

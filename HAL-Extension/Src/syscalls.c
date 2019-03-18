@@ -9,16 +9,20 @@
  */
 
 #include <limits.h>
+#include <errno.h>
 #include "usbd_cdc_if.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
 extern int _write(int file, char *ptr, int len);
+extern USBD_HandleTypeDef hUsbDeviceFS;
 
 static TaskHandle_t xHandlingTask;
-
+static TaskHandle_t taskHandleNewUsbMessage;
 
 static int32_t handleSet = 0;
+static int32_t rxHandleSet = 0;
+static uint32_t rxMessageLength = 0;
 
 /**
   * @brief  Redirects message out USB. Method blocks until transfer fully completes or times out.
@@ -86,6 +90,7 @@ int _write(int file, char *buf, int len)
 		return len;
 	}
 
+	errno = EBUSY;
 	return -1;
 }
 
@@ -100,7 +105,7 @@ void SYS_CDC_TxCompleteIsr(void)
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 
-	// TX completed, notify task by setting TX_Complete bit
+	// TX completed, notify task
 	if (handleSet == 1) {
 		handleSet = 0;
 		vTaskNotifyGiveFromISR( xHandlingTask,
@@ -113,4 +118,75 @@ void SYS_CDC_TxCompleteIsr(void)
 	use and may be called portEND_SWITCHING_ISR(). */
 	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
+
+
+/**
+  * @brief  Attempts to read up to count bytes from USB message into the buffer starting at buf.
+  * @note   Zero copy, buffer is handed off directly to USB driver
+  * @note   This is a blocking call with no timeout.
+  * @param  file: not used
+  * @param  buf: pointer to first character to be written
+  * @parm   count: buffer capacity, in bytes
+  * @retval -1 = error, zero or positive indicates how many bytes transferred
+  */
+int _read (int file, char *buf, int count)
+{
+	// USB driver has a fixed transfer request to the host of 64-bytes or less.
+	// Since the USB driver has direct write access to the IO library buffer, need
+	// to verify the buffer from the IO library can handle at least 64-bytes to
+	// prevent buffer overrun.
+	//
+	// Note: future development could implement an additional intermediate buffer to isolate USB
+	// driver from IO library buffer...but then it would no longer be a zero copy interface.
+	if (count < 64 ) {
+		errno = ENOBUFS;
+		return -1;
+	}
+
+	// Setup handle for task notification from ISR
+	taskENTER_CRITICAL();
+	taskHandleNewUsbMessage = xTaskGetCurrentTaskHandle(); // Used by the ISR to notify this task
+	//xTaskNotifyStateClear(xHandlingTask); // Clear pending notifications state (does not affect notification value), from prior Tx attempts
+	ulTaskNotifyTake( pdTRUE, 0); // Zero wait, clear both pending notification state & pending notification value, from prior Tx attempts
+	rxHandleSet = 1; // Flag to notify ISR handle is now set for notification
+
+	// Hand buffer to USB driver...notifies PC host clear to send more data
+	USBD_CDC_SetRxBuffer(&hUsbDeviceFS, (uint8_t *)buf);
+	USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+	taskEXIT_CRITICAL();
+
+	// Now wait for the USB host to send us something
+	ulTaskNotifyTake(pdTRUE,  // Clear the notification value before exiting
+					 portMAX_DELAY ); // wait forever
+
+	// Message received, return number of bytes in message
+	return rxMessageLength;
+}
+
+
+/**
+  * @brief  When USB RX message event occurs, this method notifies the RTOS, which
+  * 		in turns notifies the blocked task waiting for USB RX message RX event.
+  * @parm   length: how many bytes in message
+  */
+void SYS_CDC_RxMessageIsr(uint32_t length)
+{
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+
+	rxMessageLength = length;
+
+	// RX message event, notify task
+	if (rxHandleSet == 1) {
+		vTaskNotifyGiveFromISR( taskHandleNewUsbMessage,
+						   &xHigherPriorityTaskWoken );
+	}
+
+	/* If xHigherPriorityTaskWoken is now set to pdTRUE then a context switch
+	should be performed to ensure the interrupt returns directly to the highest
+	priority task.  The macro used for this purpose is dependent on the port in
+	use and may be called portEND_SWITCHING_ISR(). */
+	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+}
+
 

@@ -20,7 +20,9 @@
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-char buf[BUFSIZ * 8];
+char obuf[BUFSIZ] = {}; // output buffer
+char ibuf[64] = {}; // input buffer, match to USB
+static char commandLineBuffer[1024] = {};
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -42,102 +44,24 @@ class TestThread : public Thread {
     protected:
 
         virtual void Run() {
-/*
-            int SimulatedWorkDelayMs = 0;
-            int TaskPeriodMs = 500;
-            TickType_t TaskPeriodTicks = Ticks::MsToTicks(TaskPeriodMs);
-*/
-
-        	// ResetDelayUntil();
-        	uint8_t randomArray[] = " - USB Large Message";
-
             while (true) {
-/*
-                TickType_t Start = Ticks::GetTicks();
-
-                SimulatedWorkDelayMs += 33;
-                if (SimulatedWorkDelayMs > TaskPeriodMs) {
-                    SimulatedWorkDelayMs = 0;
-                    TaskPeriodMs += 500;
-                    TaskPeriodTicks = Ticks::MsToTicks(TaskPeriodMs);
-                }
-                TickType_t ticks = Ticks::MsToTicks(SimulatedWorkDelayMs);
-
-                //
-                //  Simulate variable length processing time
-                //
-                Delay(ticks);
-
-                DelayUntil(TaskPeriodTicks);
-
-                TickType_t End = Ticks::GetTicks();
-
-                TickType_t Diff = End - Start;
-                TickType_t PeriodMeasuredMs = Ticks::TicksToMs(Diff);
-
-*/
 
 //                DelayUntil(1000);
 
             	GPIOB->ODR ^= GPIO_ODR_OD14;
-
-            	_write(0, buf, sizeof(buf)); // send a really big random buffer out the USB port
-
-/*
-            	for (int index = 0; index < 10; index++)
-            	{
-                	printf("Message burst - %u - %lu \n", index, Ticks::GetTicks());
-            	}
-            	printf("\n");
-*/
-/*
-            	for (int index = 0; index < 10; index++)
-            	{
-                	cout << "Message burst - " << index << " - " << Ticks::GetTicks() << endl;
-            	}
-            	cout << endl;
-*/
-/*
-            	cout << Ticks::GetTicks();
-            	for (uint32_t index = 0; index < 50; index++)
-            	{
-                	cout << randomArray;
-            	}
-            	cout << endl;
-
-            	cout << Ticks::GetTicks() << endl;
-
-*/
-/*
-            	printf("%lu", Ticks::GetTicks());
-            	for (uint32_t i = 0; i < 50; i++)
-            	{
-					for (uint32_t index = 0; index < sizeof(randomArray) - 1; index++)
-					{
-						printf("%c", randomArray[index]);
-					}
-            	}
-            	printf("\n");
-            	fflush(stdout);
-*/
-/*
-            	printf("%lu\n", Ticks::GetTicks());
+            	fgets(commandLineBuffer, sizeof(commandLineBuffer), stdin);
+            	printf("%lu - %s", Ticks::GetTicks(), commandLineBuffer);
             	fflush(stdout);
 
-            	printf("%lu\n", Ticks::GetTicks());
-            	fflush(stdout);
-*/
-//            	printf("Hello world - %lu \n", Ticks::GetTicks());
-//            	printf("Second Msg. - %lu \n\n", Ticks::GetTicks());
-//            	fflush(stdout);
+
+//            	_write(0, buf, sizeof(buf)); // send a really big random buffer out the USB port
+
 
 //            	cout << "Hello world - " << Ticks::GetTicks() << endl;
 //            	cout << "Second message " << endl;
 //
 //            	cerr << "Hello world - " << Ticks::GetTicks() << "\r" << endl;
 //            	clog << "Hello world - " << Ticks::GetTicks() << "\r" << endl;
-
-
 
             	// USB enumeration between host and device can/will be delayed on startup, so cout buffer will need
             	// special handling to establish data stream
@@ -161,7 +85,8 @@ class TestThread : public Thread {
 int main(void)
 {
 	// User allocated buffer to streaming messages over USB, flushing is manually controlled
-	setbuf(stdout, buf);
+	setvbuf(stdin,  ibuf, _IOLBF, sizeof(ibuf));
+	setvbuf(stdout, obuf, _IOFBF, sizeof(obuf));
 
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */

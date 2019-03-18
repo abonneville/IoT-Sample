@@ -53,6 +53,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CMSIS/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc"/>
 								</option>
 								<option id="com.atollic.truestudio.gcc.symbols.defined.1670122205" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
@@ -65,7 +67,7 @@
 								<option id="com.atollic.truestudio.common_options.target.instr_set.1503159865" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gcc.optimization.prep_garbage.586275206" name="Prepare dead code removal " superClass="com.atollic.truestudio.gcc.optimization.prep_garbage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.optimization.prep_data.1044766448" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="-Wno-unused-parameter" valueType="string"/>
 								<option id="com.atollic.truestudio.exe.debug.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.debug.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0g" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
@@ -74,7 +76,7 @@
 								<option id="com.atollic.truestudio.gcc.warnings.extra.571014395" name="Enable extra warning flags" superClass="com.atollic.truestudio.gcc.warnings.extra" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.warnings.pedantic.2036508730" name="Issue all warnings demanded by strict ISO C and ISO C++" superClass="com.atollic.truestudio.gcc.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.warnings.missing_include_dirs.1362076607" name="Warn if a user-supplied include directory does not exist" superClass="com.atollic.truestudio.gcc.warnings.missing_include_dirs" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option id="com.atollic.truestudio.gcc.warnings.w_switch_default.2042863168" name="Warn when switch statement does not have a default case" superClass="com.atollic.truestudio.gcc.warnings.w_switch_default" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gcc.warnings.w_switch_default.2042863168" name="Warn when switch statement does not have a default case" superClass="com.atollic.truestudio.gcc.warnings.w_switch_default" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.warnings.w_switch_enum.541522538" name="Warn if switch is used on enum type and switch statement lacks case for some enumerations" superClass="com.atollic.truestudio.gcc.warnings.w_switch_enum" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<inputType id="com.atollic.truestudio.gcc.input.850396938" superClass="com.atollic.truestudio.gcc.input"/>
 							</tool>
@@ -147,6 +149,7 @@
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Inc"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
 						<entry excluding="syscalls.c|main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
+						<entry excluding="startup_stm32l475xx.s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -206,6 +209,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Drivers/CMSIS/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="../Inc"/>
+									<listOptionValue builtIn="false" value="../Drivers/STM32L4xx_HAL_Driver/Inc"/>
 								</option>
 								<option id="com.atollic.truestudio.gcc.symbols.defined.1670122205" name="Defined symbols" superClass="com.atollic.truestudio.gcc.symbols.defined" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
@@ -218,7 +223,7 @@
 								<option id="com.atollic.truestudio.common_options.target.instr_set.1503159865" name="Instruction set" superClass="com.atollic.truestudio.common_options.target.instr_set" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.instr_set.thumb2" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gcc.optimization.prep_garbage.586275206" name="Prepare dead code removal " superClass="com.atollic.truestudio.gcc.optimization.prep_garbage" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.optimization.prep_data.1044766448" name="Prepare dead data removal" superClass="com.atollic.truestudio.gcc.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="" valueType="string"/>
+								<option id="com.atollic.truestudio.gcc.misc.otherflags.895097519" name="Other options" superClass="com.atollic.truestudio.gcc.misc.otherflags" useByScannerDiscovery="false" value="-Wno-unused-parameter" valueType="string"/>
 								<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.1763412676" name="Optimization Level" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0s" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
@@ -227,7 +232,7 @@
 								<option id="com.atollic.truestudio.gcc.warnings.extra.1546387196" name="Enable extra warning flags" superClass="com.atollic.truestudio.gcc.warnings.extra" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.warnings.pedantic.1172020237" name="Issue all warnings demanded by strict ISO C and ISO C++" superClass="com.atollic.truestudio.gcc.warnings.pedantic" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.warnings.missing_include_dirs.76414179" name="Warn if a user-supplied include directory does not exist" superClass="com.atollic.truestudio.gcc.warnings.missing_include_dirs" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option id="com.atollic.truestudio.gcc.warnings.w_switch_default.64819114" name="Warn when switch statement does not have a default case" superClass="com.atollic.truestudio.gcc.warnings.w_switch_default" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+								<option id="com.atollic.truestudio.gcc.warnings.w_switch_default.64819114" name="Warn when switch statement does not have a default case" superClass="com.atollic.truestudio.gcc.warnings.w_switch_default" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<option id="com.atollic.truestudio.gcc.warnings.w_switch_enum.1916226360" name="Warn if switch is used on enum type and switch statement lacks case for some enumerations" superClass="com.atollic.truestudio.gcc.warnings.w_switch_enum" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<inputType id="com.atollic.truestudio.gcc.input.850396938" superClass="com.atollic.truestudio.gcc.input"/>
 							</tool>
@@ -299,6 +304,7 @@
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Inc"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Middlewares"/>
 						<entry excluding="syscalls.c|main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Src"/>
+						<entry excluding="startup_stm32l475xx.s" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -310,7 +316,14 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="Startup.com.atollic.truestudio.exe.1549124020" name="Executable" projectType="com.atollic.truestudio.exe"/>
 	</storageModule>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/STM32CubeMX"/>
+		</configuration>
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/STM32CubeMX"/>
+		</configuration>
+	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
