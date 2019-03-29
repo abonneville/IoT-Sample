@@ -8,17 +8,31 @@
  *      Author: Andrew
  */
 
+#include <stdlib.h> // malloc() and free()
 #include <limits.h>
-#include <errno.h>
+#include <errno.h> // error codes
+#include <sys/times.h> // used by _times()
+#include <sys/time.h> // used by _gettimeofday()
+
+
 #include "usbd_cdc_if.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
 
-extern int _write(int file, char *ptr, int len);
+// C Library runtime / system calls
+//extern int _write(int file, char *ptr, int len);
+//extern int _read (int file, char *buf, int count);
+//extern void *malloc(size_t size);
+//extern void free(void *ptr);
+
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 static TaskHandle_t xHandlingTask;
 static TaskHandle_t taskHandleNewUsbMessage;
+
+static SemaphoreHandle_t txSemaphore;
+static int32_t initWrite = 0;
 
 static int32_t handleSet = 0;
 static int32_t rxHandleSet = 0;
@@ -33,7 +47,8 @@ static uint32_t rxMessageLength = 0;
   * @param  file: not used
   * @param  buf: pointer to first character to be sent
   * @parm   len: how many characters to be sent
-  * @retval -1 = message not sent, zero or positive indicates how many bytes transferred
+  * @retval -1 = message not sent or timed out waiting
+  * 		zero or positive indicates how many bytes transferred
   */
 int _write(int file, char *buf, int len)
 {
@@ -41,56 +56,63 @@ int _write(int file, char *buf, int len)
 
 	uint32_t txResult = 0;
 
-	// To achieve zero-copy, means we have to block until transfer completes before releasing buffer
-	// back to application. Calculate a nominal transfer/block time based on the following
-	// assumptions:
-	// 		1. Average 'n' data packets per frame
-	//		2. Host honors requested polling interval
-	// TODO finalize value to be used, 500mS, 5000mS, or dynamic value based on size of message
-	uint32_t transferTime = (len + 63) >> 6; // determine number of packets in message, assume 1 packet per frame
-	//transferTime = (transferTime + 1) >> 1; // determine number of frames, assume 'n' packets per frame
-	transferTime += CDC_FS_BINTERVAL; // add in polling interval requested from host
-	TickType_t xMaxBlockTime = pdMS_TO_TICKS(transferTime);
-
-
 	// What to do when len is zero:
 	// For USB, zero length packets are used to indicate end of transfer. For the C++ STL, zero
 	// means to flush data buffers as required. So a zero here is not related to USB end of
 	// transmission and will be ignored.
 	if (len == 0) return 0; // avoid unnecessary call to USB driver
 
-	// Known limitations with calling CDC_Transmit_FS()
-	// 1.) If link with host is down, the transfer will fail. User will then need to
-	//		periodically call cout.fail() and cout.clear() to maintain/respond to lost link with host
-	// 2.) 1-byte transfers (cerr, clog, etc...) will send just 1-byte and then block until transfer
-	//		is complete.
-	//
+	// To achieve zero-copy, means we have to block until transfer completes before releasing buffer
+	// back to application. Calculate a nominal transfer/block time based on the following
+	// assumptions:
+	// 		1. Average 'n' data packets per frame
+	//		2. Host honors requested polling interval
+	uint32_t transferTime = (len + 63) >> 6; // determine number of packets in message, assume 1 packet per frame
+	transferTime += CDC_FS_BINTERVAL; // add in polling interval requested from host
+	TickType_t xMaxBlockTime = pdMS_TO_TICKS(transferTime);
 
-	// Setup handle for task notification from ISR
-	taskENTER_CRITICAL();
-	xHandlingTask = xTaskGetCurrentTaskHandle(); // Used by the ISR to notify this task
-	//xTaskNotifyStateClear(xHandlingTask); // Clear pending notifications state (does not affect notification value), from prior Tx attempts
-	ulTaskNotifyTake( pdTRUE, 0); // Zero wait, clear both pending notification state & pending notification value, from prior Tx attempts
-	handleSet = 1; // Flag to notify ISR handle is now set for notification
-
-	// Initiate TX
-	USBD_StatusTypeDef status = (USBD_StatusTypeDef)CDC_Transmit_FS((uint8_t *)buf, len);
-
-	if (status == USBD_OK) {
-		// Wait for TX Complete
-		taskEXIT_CRITICAL();
-		txResult = ulTaskNotifyTake( pdTRUE,  // Clear the notification value before exiting
-						  xMaxBlockTime );
-	}
-	else {
-		taskEXIT_CRITICAL();
+	// By design, a single thread handles normal transmit of messages. However, when debugging it can
+	// be useful to allow other threads to send debug messages as well. To support multiple threads,
+	// a semaphore has been added to guard access to the USB transmit capability.
+	if (initWrite == 0) {
+		initWrite = 1;
+		txSemaphore = xSemaphoreCreateMutex();
 	}
 
-	if ((status == USBD_OK) && (txResult != 0)) {
-		return len;
+	if (txSemaphore != NULL) {
+		if (xSemaphoreTake(txSemaphore, xMaxBlockTime + 1) == pdTRUE)
+		{
+			// Setup handle for task notification from ISR
+			taskENTER_CRITICAL();
+			xHandlingTask = xTaskGetCurrentTaskHandle(); // Used by the ISR to notify this task
+			//xTaskNotifyStateClear(xHandlingTask); // Clear pending notifications state (does not affect notification value), from prior Tx attempts
+			ulTaskNotifyTake( pdTRUE, 0); // Zero wait, clear both pending notification state & pending notification value, from prior Tx attempts
+			handleSet = 1; // Flag to notify ISR handle is now set for notification
+
+			// Initiate TX
+			USBD_StatusTypeDef status = (USBD_StatusTypeDef)CDC_Transmit_FS((uint8_t *)buf, len);
+			taskEXIT_CRITICAL();
+
+			if (status == USBD_OK) {
+				// Wait for TX Complete
+				txResult = ulTaskNotifyTake( pdTRUE,  // Clear the notification value before exiting
+								  xMaxBlockTime );
+
+
+				if (txResult != 0) {
+					xSemaphoreGive(txSemaphore);
+					return len;
+				}
+			}
+
+			xSemaphoreGive(txSemaphore);
+			errno = EBUSY;
+			return -1;
+		}
+
 	}
 
-	errno = EBUSY;
+	errno = ENOLCK;
 	return -1;
 }
 
@@ -190,3 +212,57 @@ void SYS_CDC_RxMessageIsr(uint32_t length)
 }
 
 
+#if 0 // not used, untested
+/**
+  * @brief
+  * @note
+  * @param  tms: not supported,
+  * @retval 32-bit unsigned value
+  */
+clock_t _times(struct tms *buf)
+{
+	clock_t sysTickCount = xTaskGetTickCount();
+	buf->tms_utime = buf->tms_stime = buf->tms_cutime = buf->tms_cstime = sysTickCount;
+	return sysTickCount;
+}
+#endif
+
+
+/**
+  * @brief	Used by Google Test, not to be used anywhere else
+  * @note	POSIX.1-2008 marks gettimeofday() as obsolete
+  * @param  *tv is set to the time since startup
+  * @param	*tzvp, obsolete timezone value, place holder for legacy interface
+  * @retval 0 for success, or -1 for failure (in which case errno is set appropriately
+  */
+int _gettimeofday( struct timeval *tv, void *tzvp )
+{
+	time_t t = xTaskGetTickCount();  // get uptime in ticks
+	tv->tv_sec  = ( t / configTICK_RATE_HZ );  // convert to seconds
+	tv->tv_usec = ( t % configTICK_RATE_HZ ) * 1000;  // get remaining microseconds
+	return 0;
+}
+
+
+/**
+  * @brief	Allocates a region of memory large enough to hold an object of "size"
+  * @note	Redirect to use RTOS method for managing heap
+  * @param  size amount of memory to be allocated (as measured by sizeof operator)
+  * @retval NULL unable to allocate requested memory, otherwise non-NULL pointer to
+  * first element in the allocated memory region.
+  */
+void *malloc(size_t size)
+{
+	return pvPortMalloc(size);
+}
+
+
+/**
+  * @brief	Deallocates a region of memory previously allocated by malloc or similar
+  * @note	Redirect to use RTOS method for managing heap
+  * @param  ptr to memory segment to be de-allocated and returned to heap
+  */
+void free(void *ptr)
+{
+	return vPortFree(ptr);
+}

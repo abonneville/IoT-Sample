@@ -1,9 +1,7 @@
 
-//#include <iostream>
 #include <string>
 #include <cstdio>
 
-//#include "main.hpp"
 #include "main.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -11,6 +9,14 @@
 #include "ticks.hpp"
 #include "stm32l4xx_hal.h"
 #include "usb_device.h"
+#include "usbd_cdc.h"
+#include "usbd_cdc_if.h"
+
+#include "CommandInterface.hpp"
+#include "ResponseInterface.hpp"
+
+extern uint8_t UserRxBufferFS[];
+extern uint8_t UserTxBufferFS[];
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -20,62 +26,14 @@
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-char obuf[BUFSIZ] = {}; // output buffer
-char ibuf[64] = {}; // input buffer, match to USB
-static char commandLineBuffer[1024] = {};
+//static char obuf[BUFSIZ] = {}; // device/library output buffer
+//static char ibuf[CDC_DATA_FS_OUT_PACKET_SIZE] = {}; // device/library input buffer, match to USB host out packet size
 
 
 /* Private function prototypes -----------------------------------------------*/
-extern "C" int _write(int file, char *ptr, int len);
 
 using namespace cpp_freertos;
 using namespace std;
-
-class TestThread : public Thread {
-
-    public:
-
-        TestThread()
-           : Thread("TestThread", 100, 2)
-        {
-            Start();
-        };
-
-    protected:
-
-        virtual void Run() {
-            while (true) {
-
-//                DelayUntil(1000);
-
-            	GPIOB->ODR ^= GPIO_ODR_OD14;
-            	fgets(commandLineBuffer, sizeof(commandLineBuffer), stdin);
-            	printf("%lu - %s", Ticks::GetTicks(), commandLineBuffer);
-            	fflush(stdout);
-
-
-//            	_write(0, buf, sizeof(buf)); // send a really big random buffer out the USB port
-
-
-//            	cout << "Hello world - " << Ticks::GetTicks() << endl;
-//            	cout << "Second message " << endl;
-//
-//            	cerr << "Hello world - " << Ticks::GetTicks() << "\r" << endl;
-//            	clog << "Hello world - " << Ticks::GetTicks() << "\r" << endl;
-
-            	// USB enumeration between host and device can/will be delayed on startup, so cout buffer will need
-            	// special handling to establish data stream
-/*            	if (cout.fail()) {
-            		cout.clear();
-            	}
-*/
-
-            }
-        };
-
-    private:
-};
-
 
 
 /**
@@ -84,57 +42,31 @@ class TestThread : public Thread {
   */
 int main(void)
 {
-	// User allocated buffer to streaming messages over USB, flushing is manually controlled
-	setvbuf(stdin,  ibuf, _IOLBF, sizeof(ibuf));
-	setvbuf(stdout, obuf, _IOFBF, sizeof(obuf));
+	// Redirect IO library to use buffers allocated by USB driver
+	setvbuf(stdin,  (char *)UserRxBufferFS, _IOLBF, APP_RX_DATA_SIZE);
+	setvbuf(stdout, (char *)UserTxBufferFS, _IOFBF, APP_TX_DATA_SIZE);
 
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USB_DEVICE_Init();
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_USB_DEVICE_Init();
 
-  TestThread thread;
-  Thread::StartScheduler();
+	ResponseInterface rspThread;
+	CommandInterface cmdThread = CommandInterface(rspThread);
 
+	Thread::StartScheduler();
 
-  /* Infinite loop */
-  while (1)
-  {
-    }
+	/* Infinite loop */
+	while (1)
+	{
+	}
 }
 
 
-// TODO determine what to be done with global new delete and ucHeap
-#if 0
-void * operator new( size_t size )
-{
-	return pvPortMalloc(size);
-}
-
-/*
-void * operator new
-{
-	return pvPortMalloc( size );
-}
-*/
-
-void operator delete( void * ptr )
-{
-	vPortFree( ptr );
-}
-
-/*
-void operator delete
-{
-	vPortFree( ptr );
-}
-*/
-
-#endif
 

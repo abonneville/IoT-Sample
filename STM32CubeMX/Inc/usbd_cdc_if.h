@@ -59,6 +59,8 @@
 #include "usbd_cdc.h"
 
 /* USER CODE BEGIN INCLUDE */
+#define APP_RX_DATA_SIZE  64
+#define APP_TX_DATA_SIZE  1024
 
 /* USER CODE END INCLUDE */
 

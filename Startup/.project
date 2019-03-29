@@ -3,6 +3,7 @@
 	<name>Startup</name>
 	<comment></comment>
 	<projects>
+		<project>Application</project>
 		<project>FreeRTOS</project>
 		<project>HAL-Extension</project>
 		<project>STM32CubeMX</project>
