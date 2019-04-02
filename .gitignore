@@ -3,6 +3,7 @@
 # Build results
 [Dd]ebug/
 [Rr]elease/
+FreeRTOS_TAD_logs/
 
 ### STM32CubeMX ###
 

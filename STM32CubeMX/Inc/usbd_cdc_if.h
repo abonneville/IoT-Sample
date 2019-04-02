@@ -61,6 +61,9 @@
 /* USER CODE BEGIN INCLUDE */
 #define APP_RX_DATA_SIZE  64
 #define APP_TX_DATA_SIZE  1024
+extern uint8_t UserRxBufferFS[];
+extern uint8_t UserTxBufferFS[];
+
 
 /* USER CODE END INCLUDE */
 

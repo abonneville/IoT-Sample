@@ -3,20 +3,16 @@
 #include <cstdio>
 
 #include "main.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "thread.hpp"
-#include "ticks.hpp"
 #include "stm32l4xx_hal.h"
 #include "usb_device.h"
-#include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
 
 #include "CommandInterface.hpp"
 #include "ResponseInterface.hpp"
 
-extern uint8_t UserRxBufferFS[];
-extern uint8_t UserTxBufferFS[];
+using namespace cpp_freertos;
+using namespace std;
+
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -26,14 +22,12 @@ extern uint8_t UserTxBufferFS[];
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-//static char obuf[BUFSIZ] = {}; // device/library output buffer
-//static char ibuf[CDC_DATA_FS_OUT_PACKET_SIZE] = {}; // device/library input buffer, match to USB host out packet size
+static volatile uint8_t freeRTOSMemoryScheme = configUSE_HEAP_SCHEME; /* used by NXP thread aware debugger */
 
+static ResponseInterface rspThread;
+static CommandInterface cmdThread = CommandInterface(rspThread);
 
 /* Private function prototypes -----------------------------------------------*/
-
-using namespace cpp_freertos;
-using namespace std;
 
 
 /**
@@ -46,6 +40,8 @@ int main(void)
 	setvbuf(stdin,  (char *)UserRxBufferFS, _IOLBF, APP_RX_DATA_SIZE);
 	setvbuf(stdout, (char *)UserTxBufferFS, _IOFBF, APP_TX_DATA_SIZE);
 
+	/* Force compiler to "keep" variable. */
+	freeRTOSMemoryScheme = freeRTOSMemoryScheme;
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
@@ -57,9 +53,11 @@ int main(void)
 	MX_GPIO_Init();
 	MX_USB_DEVICE_Init();
 
-	ResponseInterface rspThread;
-	CommandInterface cmdThread = CommandInterface(rspThread);
-
+	/* Note: When the RTOS scheduler is started, the main stack pointer (MSP) is reset,
+	 * effectively wiping out all local main() variables and objects. Do not declare any
+	 * C/C++ threads in main(). If objects need to be declared in main, then change the code
+	 * within prvPortStartFirstTask() to retain the MSP value.
+	 */
 	Thread::StartScheduler();
 
 	/* Infinite loop */

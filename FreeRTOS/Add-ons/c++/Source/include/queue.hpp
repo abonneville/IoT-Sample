@@ -126,9 +126,10 @@ class Queue {
          *  @throws QueueCreateException
          *  @param maxItems Maximum number of items this queue can hold.
          *  @param itemSize Size of an item in a queue.
+         *  @param name Name used by thread aware debugger
          *  @note FreeRTOS queues use a memcpy / fixed size scheme for queues.
          */
-        Queue(UBaseType_t maxItems, UBaseType_t itemSize);
+        Queue(UBaseType_t maxItems, UBaseType_t itemSize, const char *name = "Queue");
 
         /**
          *  Our destructor.

@@ -38,6 +38,7 @@ static int32_t handleSet = 0;
 static int32_t rxHandleSet = 0;
 static uint32_t rxMessageLength = 0;
 
+
 /**
   * @brief  Redirects message out USB. Method blocks until transfer fully completes or times out.
   * @note   Zero copy, buffer is handed off directly to USB driver
@@ -77,6 +78,8 @@ int _write(int file, char *buf, int len)
 	if (initWrite == 0) {
 		initWrite = 1;
 		txSemaphore = xSemaphoreCreateMutex();
+		vQueueAddToRegistry(txSemaphore, __func__);
+
 	}
 
 	if (txSemaphore != NULL) {

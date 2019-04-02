@@ -33,7 +33,7 @@ ResponseInterface::ResponseInterface()
 {
 	constexpr static UBaseType_t itemSize = sizeof(ResponseId_t);
 	constexpr static UBaseType_t maxItems = 5;
-	msgQueue = new Queue(maxItems, itemSize);
+	msgQueue = new Queue(maxItems, itemSize, "msgQueue");
 
 	Start();
 }
