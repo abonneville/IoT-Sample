@@ -15,9 +15,13 @@
  * will generate the requested message and transmit to an external host.
  */
 typedef enum {
+	RESPONSE_MSG_AWS_STATUS,
+	RESPONSE_MSG_HELP,
 	RESPONSE_MSG_INVALID,
+	RESPONSE_MSG_PROMPT,
+	RESPONSE_MSG_STATUS,
 	RESPONSE_MSG_VERSION,
-	RESPONSE_MSG_STATUS
+	RESPONSE_MSG_WIFI_STATUS
 }ResponseId_t;
 
 

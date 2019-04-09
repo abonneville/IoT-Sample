@@ -74,8 +74,6 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void SystemClock_Config(void);
-void MX_GPIO_Init(void);
 
 /* USER CODE END EFP */
 

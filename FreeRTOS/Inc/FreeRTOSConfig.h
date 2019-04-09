@@ -39,19 +39,20 @@
 #define configIDLE_SHOULD_YIELD                 1
 #define configUSE_TASK_NOTIFICATIONS            1
 #define configUSE_MUTEXES                       1
-#define configUSE_RECURSIVE_MUTEXES             0 // set to 1 in template
-#define configUSE_COUNTING_SEMAPHORES           0 // set to 1 in template
+#define configUSE_RECURSIVE_MUTEXES             0
+#define configUSE_COUNTING_SEMAPHORES           0
 #define configQUEUE_REGISTRY_SIZE               8
 #define configUSE_QUEUE_SETS                    0
 #define configUSE_TIME_SLICING                  0
 #define configUSE_NEWLIB_REENTRANT              0
-#define configENABLE_BACKWARD_COMPATIBILITY     0
+#define configENABLE_BACKWARD_COMPATIBILITY     0 /* Set to 1 for v10.1.0 and above when using ST-Link thread aware debugging */
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS 5
+#define configUSE_POSIX_ERRNO 					0
 
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         0
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
-#define configTOTAL_HEAP_SIZE                   ((size_t)6000)
+#define configTOTAL_HEAP_SIZE                   ((size_t)40000)
 #define configAPPLICATION_ALLOCATED_HEAP        0
 #define configUSE_HEAP_SCHEME                   4 /* either 1 (only alloc), 2 (alloc/free), 3 (malloc), 4 (coalesc blocks), 5 (multiple blocks) */
 
@@ -66,7 +67,7 @@
 #define configGENERATE_RUN_TIME_STATS           1
 #define configUSE_TRACE_FACILITY                1
 #define configUSE_STATS_FORMATTING_FUNCTIONS    0
-#define configRECORD_STACK_HIGH_ADDRESS         1  // Adds pxEndOfStack to TCB
+#define configRECORD_STACK_HIGH_ADDRESS         1  /* Optional set to 1, adds pxEndOfStack to TCB */
 
 /* Co-routine related definitions. */
 #define configUSE_CO_ROUTINES                   0

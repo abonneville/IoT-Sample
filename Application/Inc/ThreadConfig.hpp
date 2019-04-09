@@ -5,8 +5,8 @@
  *      Author: Andrew
  */
 
-#ifndef THREADINTERFACE_HPP_
-#define THREADINTERFACE_HPP_
+#ifndef THREADCONFIG_HPP_
+#define THREADCONFIG_HPP_
 
 #include "FreeRTOS.h"
 
@@ -35,4 +35,4 @@ typedef uint16_t stack_size_t;
 constexpr stack_size_t STACK_SIZE_COMMANDS = (512 / 4);
 constexpr stack_size_t STACK_SIZE_RESPONSE = (512 / 4);
 
-#endif /* THREADINTERFACE_HPP_ */
+#endif /* THREADCONFIG_HPP_ */

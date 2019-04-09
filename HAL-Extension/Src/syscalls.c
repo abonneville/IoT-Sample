@@ -39,6 +39,9 @@ static int32_t rxHandleSet = 0;
 static uint32_t rxMessageLength = 0;
 
 
+static volatile uint8_t freeRTOSMemoryScheme = configUSE_HEAP_SCHEME; /* used by NXP thread aware debugger */
+
+
 /**
   * @brief  Redirects message out USB. Method blocks until transfer fully completes or times out.
   * @note   Zero copy, buffer is handed off directly to USB driver
@@ -267,5 +270,8 @@ void *malloc(size_t size)
   */
 void free(void *ptr)
 {
+	/* Force compiler to "keep" variable. */
+	freeRTOSMemoryScheme = freeRTOSMemoryScheme;
+
 	return vPortFree(ptr);
 }
