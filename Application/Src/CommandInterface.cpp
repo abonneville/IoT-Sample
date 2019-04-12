@@ -4,10 +4,12 @@
  *  Created on: Mar 27, 2019
  *      Author: Andrew
  */
+#include <syscalls.h>
 #include <ThreadConfig.hpp>
 #include <cstdio>
 #include <algorithm>
 #include <cstring>
+
 
 #include "CommandInterface.hpp"
 #include "ResponseInterface.hpp"
@@ -63,12 +65,12 @@ void CommandInterface::Run()
 	Buffer_t::const_iterator lineEnd;
 
 	ResponseId_t responseId;
+	SetUsbRxBuffer();
 
     while (true) {
 
     	/* Wait for a user command */
     	std::fgets(commandLineBuffer.begin(), commandLineBuffer.size(), stdin);
-
 
     	/* Validate buffer formatting */
     	lineEnd = validateBuffer(commandLineBuffer.begin(), commandLineBuffer.end());

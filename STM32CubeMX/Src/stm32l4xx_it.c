@@ -39,7 +39,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc.h"
-#include "syscall.h"
+#include "syscalls.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

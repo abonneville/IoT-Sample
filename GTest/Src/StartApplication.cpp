@@ -27,6 +27,7 @@
 #include "gtest.h"
 #include "thread.hpp"
 #include "sysdbg.h"
+#include "syscalls.h"
 
 #include <StartApplication.hpp>
 #include "CommandInterface.hpp"
@@ -61,6 +62,8 @@ class GTestThread : public cpp_freertos::Thread {
     protected:
 
         virtual void Run() {
+        	SetUsbTxBuffer();
+        	SetUsbRxBuffer();
 
         	while (true) {
             	// Wait for USB link to be established

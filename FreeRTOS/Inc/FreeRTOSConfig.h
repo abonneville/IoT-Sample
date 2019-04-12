@@ -44,9 +44,9 @@
 #define configQUEUE_REGISTRY_SIZE               8
 #define configUSE_QUEUE_SETS                    0
 #define configUSE_TIME_SLICING                  0
-#define configUSE_NEWLIB_REENTRANT              0
+#define configUSE_NEWLIB_REENTRANT              1 /* Set to 1, also requires implementation of reentrant system calls (ie _write_r) */
 #define configENABLE_BACKWARD_COMPATIBILITY     1 /* Set to 1 for v10.1.0 and above when using ST-Link thread aware debugging */
-#define configNUM_THREAD_LOCAL_STORAGE_POINTERS 5
+#define configNUM_THREAD_LOCAL_STORAGE_POINTERS 0
 #define configUSE_POSIX_ERRNO 					0
 
 /* Memory allocation related definitions. */

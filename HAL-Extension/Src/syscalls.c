@@ -1,30 +1,49 @@
 /*
- * syscalls.c
+ * Copyright (C) 2019 Andrew Bonneville.  All Rights Reserved.
  *
- * Not a complete implementation, but provides definition for various STL and
- * related libraries as required.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- *  Created on: Feb 23, 2019
- *      Author: Andrew
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
+
 
 #include <stdlib.h> // malloc() and free()
 #include <limits.h>
 #include <errno.h> // error codes
 #include <sys/times.h> // used by _times()
 #include <sys/time.h> // used by _gettimeofday()
-
+#include <_newlib_version.h>
+#include <reent.h> /* Reentrant versions of system calls.  */
 
 #include "usbd_cdc_if.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 
-// C Library runtime / system calls
-//extern int _write(int file, char *ptr, int len);
-//extern int _read (int file, char *buf, int count);
-//extern void *malloc(size_t size);
-//extern void free(void *ptr);
+
+/**
+ * Newlib references:
+ * https://sourceware.org/newlib/
+ * http://www.nadler.com/embedded/newlibAndFreeRTOS.html
+ * http://www.billgatliff.com/newlib.html
+ * https://www.cs.ccu.edu.tw/~pahsiung/courses/esd/resources/newlib.pdf
+ */
+
+
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
@@ -38,8 +57,29 @@ static int32_t handleSet = 0;
 static int32_t rxHandleSet = 0;
 static uint32_t rxMessageLength = 0;
 
+size_t xPortGetHeapBlockSize( void *pv );
 
 static volatile uint8_t freeRTOSMemoryScheme = configUSE_HEAP_SCHEME; /* used by NXP thread aware debugger */
+
+
+
+
+/**
+ * Hooks to setup thread specific buffers for stdio. These need to be called from the
+ * running thread, so the Newlib reentrant structure is initialized for the specific
+ * thread.
+ */
+void SetUsbTxBuffer(void)
+{
+	// Redirect IO library to use buffers allocated by USB driver
+	setvbuf(stdout, (char *)UserTxBufferFS, _IOFBF, APP_TX_DATA_SIZE);
+}
+
+void SetUsbRxBuffer(void)
+{
+	// Redirect IO library to use buffers allocated by USB driver
+	setvbuf(stdin,  (char *)UserRxBufferFS, _IOLBF, APP_RX_DATA_SIZE);
+}
 
 
 /**
@@ -54,7 +94,7 @@ static volatile uint8_t freeRTOSMemoryScheme = configUSE_HEAP_SCHEME; /* used by
   * @retval -1 = message not sent or timed out waiting
   * 		zero or positive indicates how many bytes transferred
   */
-int _write(int file, char *buf, int len)
+_ssize_t _write_r(struct _reent *ptr, int file, const void *buf, size_t len)
 {
 	file = file; //not used, suppress compiler warning
 
@@ -112,13 +152,13 @@ int _write(int file, char *buf, int len)
 			}
 
 			xSemaphoreGive(txSemaphore);
-			errno = EBUSY;
+			ptr->_errno = EBUSY;
 			return -1;
 		}
 
 	}
 
-	errno = ENOLCK;
+	ptr->_errno = ENOLCK;
 	return -1;
 }
 
@@ -157,7 +197,7 @@ void SYS_CDC_TxCompleteIsr(void)
   * @parm   count: buffer capacity, in bytes
   * @retval -1 = error, zero or positive indicates how many bytes transferred
   */
-int _read (int file, char *buf, int count)
+_ssize_t _read_r (struct _reent *ptr, int file, void *buf, size_t count)
 {
 	// USB driver has a fixed transfer request to the host of 64-bytes or less.
 	// Since the USB driver has direct write access to the IO library buffer, need
@@ -167,7 +207,7 @@ int _read (int file, char *buf, int count)
 	// Note: future development could implement an additional intermediate buffer to isolate USB
 	// driver from IO library buffer...but then it would no longer be a zero copy interface.
 	if (count < 64 ) {
-		errno = ENOBUFS;
+		ptr->_errno = ENOBUFS;
 		return -1;
 	}
 
@@ -241,7 +281,7 @@ clock_t _times(struct tms *buf)
   * @param	*tzvp, obsolete timezone value, place holder for legacy interface
   * @retval 0 for success, or -1 for failure (in which case errno is set appropriately
   */
-int _gettimeofday( struct timeval *tv, void *tzvp )
+int _gettimeofday_r(struct _reent *ptr, struct timeval *tv, void *tzvp)
 {
 	time_t t = xTaskGetTickCount();  // get uptime in ticks
 	tv->tv_sec  = ( t / configTICK_RATE_HZ );  // convert to seconds
@@ -257,21 +297,90 @@ int _gettimeofday( struct timeval *tv, void *tzvp )
   * @retval NULL unable to allocate requested memory, otherwise non-NULL pointer to
   * first element in the allocated memory region.
   */
-void *malloc(size_t size)
+void *_malloc_r(struct _reent *ptr, size_t size)
 {
 	return pvPortMalloc(size);
+}
+
+
+void *_realloc_r (struct _reent *ptr, void *old_ptr, size_t new_size)
+{
+	  void *new_ptr = pvPortMalloc (new_size);
+
+	  if (old_ptr && new_ptr)
+	    {
+	      size_t old_size = xPortGetHeapBlockSize(old_ptr);
+
+	      size_t copy_size = old_size > new_size ? new_size : old_size;
+	      memcpy (new_ptr, old_ptr, copy_size);
+	      vPortFree (old_ptr);
+	    }
+
+	  return new_ptr;
+}
+
+
+/**
+  * @brief	Allocates a region of memory large enough to hold "n" objects of "size"
+  * 		Prior to returning, memory is initialized to zero.
+  * @note	Redirect to use RTOS method for managing heap
+  * @param  count is how many objects of type size to be allocated
+  * @param  size of the object to be allocated (as measured by sizeof operator)
+  * @retval NULL unable to allocate requested memory, otherwise non-NULL pointer to
+  * first element in the allocated memory region.
+  */
+void *_calloc_r(struct _reent *ptr, size_t count, size_t size)
+{
+	size_t block = count * size;
+
+	void *ret = pvPortMalloc(block);
+	if (ret != NULL)
+		memset(ret, 0, block);
+
+	return ret;
 }
 
 
 /**
   * @brief	Deallocates a region of memory previously allocated by malloc or similar
   * @note	Redirect to use RTOS method for managing heap
-  * @param  ptr to memory segment to be de-allocated and returned to heap
+  * @param  block or memory segment to be de-allocated and returned to heap
   */
-void free(void *ptr)
+void _free_r(struct _reent *ptr, void *block)
 {
 	/* Force compiler to "keep" variable. */
-	freeRTOSMemoryScheme = freeRTOSMemoryScheme;
+	freeRTOSMemoryScheme;
 
-	return vPortFree(ptr);
+	return vPortFree(block);
+}
+
+
+/**
+  * @brief Required by Newlib C runtime to allocate memory during library initialization.
+  * @note  Compliant stub. See linker command file to set memory region used here
+  * @param  incr amount of memory to be allocated/deallocated in bytes
+  * @retval -1 unable to allocate/deallocate requested memory
+  * 		pointer to first element in the new allocated memory region.
+  */
+#define SBRK_SIZE (0)
+static char sbrkHeap[SBRK_SIZE];
+const char *const heapLimit = &sbrkHeap[SBRK_SIZE];
+void *_sbrk_r(struct _reent *ptr, ptrdiff_t incr)
+{
+	static char *heap_end = sbrkHeap;
+	char *prev_heap_end;
+
+	vTaskSuspendAll();
+	prev_heap_end = heap_end;
+	if (heap_end + incr > heapLimit)
+	{
+		ptr->_errno = ENOMEM;
+		xTaskResumeAll();
+		return (void *) -1;
+	}
+
+	heap_end += incr;
+
+	xTaskResumeAll();
+	return (void *) prev_heap_end;
 }

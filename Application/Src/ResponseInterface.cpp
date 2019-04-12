@@ -5,6 +5,7 @@
  *      Author: Andrew
  */
 
+#include <syscalls.h>
 #include <ThreadConfig.hpp>
 #include <string>
 #include <cstdio>
@@ -70,7 +71,9 @@ bool ResponseInterface::putResponse(ResponseId_t responseId, TickType_t Timeout)
  */
 void ResponseInterface::Run()
 {
+	SetUsbTxBuffer();
 	ResponseId_t msgId = RESPONSE_MSG_INVALID;
+
 	while (true) {
 
 		/* Wait until a request is made to generate a response message */

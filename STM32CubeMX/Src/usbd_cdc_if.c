@@ -51,7 +51,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-#include "syscall.h"
+#include "syscalls.h"
 
 /* USER CODE END INCLUDE */
 

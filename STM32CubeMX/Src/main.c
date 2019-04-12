@@ -96,11 +96,6 @@ int main(void)
 	* within prvPortStartFirstTask() to retain the MSP value.
 	*/
 
-	// Redirect IO library to use buffers allocated by USB driver
-	setvbuf(stdin,  (char *)UserRxBufferFS, _IOLBF, APP_RX_DATA_SIZE);
-	setvbuf(stdout, (char *)UserTxBufferFS, _IOFBF, APP_TX_DATA_SIZE);
-
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
