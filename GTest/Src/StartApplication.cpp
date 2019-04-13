@@ -308,16 +308,178 @@ TEST(_SysMemCheckpoint, FullHeap) {
 	EXPECT_EQ(0,_SysMemDifference(&s3, &s1, &s2));
 }
 
-TEST(_SysMemCheckpoint, MemLeak){
+
+
+TEST(malloc, ZeroElement){
 	SysCheckMemory check = _SysCheckMemory();
 
-	// no delete called for str having 20 bytes allocated
-	//char* ptr = new char[20];
+	char *ptr = (char *)malloc(0);
+	EXPECT_EQ(ptr, nullptr);
 
-	char *ptr = (char *)malloc(12);
-	strcpy(ptr,"find leak");
+	/* Zero size, no deallocation necessary */
+	// free(ptr);
+}
+
+TEST(malloc, OneElement){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)malloc(1);
+	EXPECT_NE(ptr, nullptr);
+
+	free(ptr);
+}
+
+TEST(malloc, ManyElements){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)malloc(13);
+	EXPECT_NE(ptr, nullptr);
+	strcpy(ptr,"no leak now");
+
+	free(ptr);
+}
+
+
+TEST(malloc, OutOfMemory){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)malloc(100000);
+	EXPECT_EQ(ptr, nullptr);
+
+	/* Insufficient memory, no deallocation necessary */
+	// free(ptr);
 }
 
 
 
+TEST(realloc, ZeroElement){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)malloc(12);
+	strcpy(ptr,"cool");
+	char *nptr = (char *)realloc(ptr, 0);
+	EXPECT_EQ(nptr, nullptr);
+
+	free(ptr);
+	/* Not required, zero size block */
+	//free(nptr);
+}
+
+
+TEST(realloc, OneElement){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)malloc(12);
+	strcpy(ptr,"cool");
+	char *nptr = (char *)realloc(ptr, 1);
+	EXPECT_NE(ptr, nptr);
+	EXPECT_EQ(nptr[0], 'c');
+
+	/* Not required, realloc already moved and freed old location */
+	//free(ptr);
+	free(nptr);
+}
+
+
+TEST(realloc, ManyElements){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)malloc(12);
+	strcpy(ptr,"cool");
+	char *nptr = (char *)realloc(ptr, 13);
+	EXPECT_NE(ptr, nptr);
+	ASSERT_STREQ("cool", nptr);
+
+	/* Not required, realloc already moved and freed old location */
+	//free(ptr);
+	free(nptr);
+}
+
+
+TEST(realloc, NullPtr){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)realloc(NULL, 13);
+	EXPECT_NE(ptr, nullptr);
+
+	free(ptr);
+}
+
+TEST(realloc, NullPtr_ZeroElement){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)realloc(NULL, 0);
+	EXPECT_EQ(ptr, nullptr);
+
+	/* Not required, no memory allocated */
+	//free(ptr);
+	//free(nptr);
+}
+
+
+TEST(realloc, OutOfMemory){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)realloc(NULL, 100000);
+	EXPECT_EQ(ptr, nullptr);
+
+	/* Insufficient memory, no deallocation necessary */
+	// free(ptr);
+}
+
+
+
+TEST(calloc, ZeroElement){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)calloc(0, 0);
+	EXPECT_EQ(ptr, nullptr);
+
+	ptr = (char *)calloc(0, 1);
+	EXPECT_EQ(ptr, nullptr);
+
+	ptr = (char *)calloc(1, 0);
+	EXPECT_EQ(ptr, nullptr);
+
+	/* Not required, no memory allocated */
+	//free(ptr);
+}
+
+
+TEST(calloc, OneElement){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)calloc(1, 1);
+	EXPECT_NE(ptr, nullptr);
+	EXPECT_EQ(0, ptr[0]);
+
+	free(ptr);
+}
+
+
+TEST(calloc, ManyElements){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char val[20] = {};
+	char *ptr = (char *)calloc(1,12);
+	EXPECT_NE(ptr, nullptr);
+	EXPECT_EQ(0, memcmp(val, ptr, 12));
+
+	char *nptr = (char *)calloc(5,4);
+	EXPECT_NE(nptr, nullptr);
+	EXPECT_EQ(0, memcmp(val, nptr, 20));
+
+	free(ptr);
+	free(nptr);
+}
+
+TEST(calloc, OutOfMemory){
+	SysCheckMemory check = _SysCheckMemory();
+
+	char *ptr = (char *)calloc(1, 100000);
+	EXPECT_EQ(ptr, nullptr);
+
+	/* Insufficient memory, no deallocation necessary */
+	// free(ptr);
+}
 
