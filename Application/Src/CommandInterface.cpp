@@ -60,12 +60,13 @@ CommandInterface::CommandInterface(ResponseInterface &handle)
  */
 void CommandInterface::Run()
 {
-	Buffer_t::const_iterator cmdBegin;
-//	buffer_t::const_iterator cmdEnd;
-	Buffer_t::const_iterator lineEnd;
+	errno = 0;
+	FILE *handle = std::freopen(Device.std_in, "r", stdin);
+	app_SetBuffer(handle);
 
+	Buffer_t::const_iterator cmdBegin;
+	Buffer_t::const_iterator lineEnd;
 	ResponseId_t responseId;
-	SetUsbRxBuffer();
 
     while (true) {
 
@@ -141,6 +142,8 @@ void CommandInterface::Run()
 */
 
     }
+
+    std::fclose(stdin);
 }
 
 

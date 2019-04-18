@@ -21,14 +21,20 @@
  */
 
 
-#include <stdlib.h> // malloc() and free()
+#include <stdlib.h> /* malloc() and free() */
 #include <limits.h>
-#include <errno.h> // error codes
-#include <sys/times.h> // used by _times()
-#include <sys/time.h> // used by _gettimeofday()
+#include <errno.h> /* error codes */
+#include <sys/times.h> /* used by _times() */
+#include <sys/time.h> /* used by _gettimeofday() */
+#include <sys/stat.h> /* fstat */
 #include <_newlib_version.h>
 #include <reent.h> /* Reentrant versions of system calls.  */
+#include <fcntl.h> /* file IO, flag and mode bits*/
+#include <unistd.h> /* file descriptors stdin, stdout, stderr */
+#include <assert.h> /* compile time assertions */
 
+
+#include "syscalls.h"
 #include "usbd_cdc_if.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -43,6 +49,67 @@
  * https://www.cs.ccu.edu.tw/~pahsiung/courses/esd/resources/newlib.pdf
  */
 
+typedef struct {
+   const char *name;
+   size_t nameSize;
+   int (*_open_r  )( struct _reent *r, int fd, int flags, int mode );
+   int (*_close_r )( struct _reent *r, int fd );
+   _ssize_t (*_write_r )( struct _reent *r, int fd, const void *ptr, size_t len );
+   _ssize_t (*_read_r  )( struct _reent *r, int fd, void *ptr, size_t len );
+} DeviceOperations_t;
+
+
+typedef enum {
+	fdInvalid = -1,
+	std_in = STDIN_FILENO,
+	std_out = STDOUT_FILENO,
+	std_err = STDERR_FILENO
+} FileDescriptor_t;
+
+
+const Device_t Device = {.std_in = "std_in", .std_out = "std_out", .std_err = "std_err"};
+
+static int usb1_open_r(struct _reent *ptr, int fd, int flags, int mode);
+static int usb1_close_r(struct _reent *ptr, int fd);
+static _ssize_t usb1_write_r(struct _reent *ptr, int file, const void *buf, size_t len);
+static _ssize_t usb1_read_r (struct _reent *ptr, int file, void *buf, size_t count);
+static const DeviceOperations_t dvStdin = {
+		Device.std_in, sizeof(Device.std_in),
+		usb1_open_r,
+		usb1_close_r,
+		usb1_write_r,
+		usb1_read_r
+};
+
+static const DeviceOperations_t dvStdout = {
+		Device.std_out, sizeof(Device.std_out),
+		usb1_open_r,
+		usb1_close_r,
+		usb1_write_r,
+		usb1_read_r
+};
+
+static const DeviceOperations_t dvStderr = {
+		Device.std_err, sizeof(Device.std_err),
+		usb1_open_r,
+		usb1_close_r,
+		usb1_write_r,
+		usb1_read_r
+};
+
+/**
+ * The order in which devices are added to the DeviceList, corresponds to its "file descriptor" (fd)
+ * value used by the newlib library. Newlib pre-defines the first three fd, additional files/devices
+ * can be added up to FOPEN_MAX.
+ */
+const DeviceOperations_t *DeviceList[] = {
+		&dvStdin, /* fd = [0], STDIN_FILENO */
+		&dvStdout, /* fd = [1], STDOUT_FILENO */
+		&dvStderr, /* fd = [2], STDERR_FILENO */
+		0 /* terminates the list */
+};
+
+static_assert((sizeof(DeviceList) / sizeof(intptr_t)) - 1  <= FOPEN_MAX, "Error: device list exceeds newlibs internal list for open streams");
 
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
@@ -62,24 +129,143 @@ size_t xPortGetHeapBlockSize( void *pv );
 static volatile uint8_t freeRTOSMemoryScheme = configUSE_HEAP_SCHEME; /* used by NXP thread aware debugger */
 
 
+/**
+ * @brief  Initializes IO buffer space used at the application layer.
+ * @note   Device/file must be opened prior to calling this method
+ * @param  handle For buffer/stream to be setup
+ * @retval none
+ */
+void app_SetBuffer(FILE *handle)
+{
+	if (handle == NULL) return;
+
+	switch ((FileDescriptor_t)handle->_file) {
+	case std_in:
+		setvbuf(stdin,  (char *)UserRxBufferFS, _IOLBF, APP_RX_DATA_SIZE);
+		break;
+
+	case std_out:
+		setvbuf(stdout, (char *)UserTxBufferFS, _IOFBF, APP_TX_DATA_SIZE);
+		break;
+
+	case std_err:
+		/* use defaults defined by newlib library */
+		break;
+
+	default:
+		break;
+	};
+
+}
 
 
 /**
- * Hooks to setup thread specific buffers for stdio. These need to be called from the
- * running thread, so the Newlib reentrant structure is initialized for the specific
- * thread.
+ * @brief Implements a routing algorithm between newlib library and multiple devices. See
+ * the device specific methods for details.
+ * @note  This applies to _open_r, _close_r, _write_r, and _read_r
+ *
  */
-void SetUsbTxBuffer(void)
+int _open_r(struct _reent *ptr, const char *name, int flags, int mode)
 {
-	// Redirect IO library to use buffers allocated by USB driver
-	setvbuf(stdout, (char *)UserTxBufferFS, _IOFBF, APP_TX_DATA_SIZE);
+	   int index = 0;
+	   int fd = -1;
+
+	   /* Set file descriptor based on provided name */
+	   do {
+	      if( memcmp( name, DeviceList[index]->name, DeviceList[index]->nameSize ) == 0 ) {
+	         fd = index;
+	         break;
+	      }
+	   } while( DeviceList[index++] );
+
+	   if( fd != -1 ) {
+		   /* Found a match, attempt to open device */
+		   fd = DeviceList[fd]->_open_r( ptr, fd, flags, mode );
+	   }
+	   else {
+		   ptr->_errno = ENODEV;
+	   }
+
+	   return fd;
 }
 
-void SetUsbRxBuffer(void)
+int _close_r(struct _reent *ptr, int fd)
 {
-	// Redirect IO library to use buffers allocated by USB driver
-	setvbuf(stdin,  (char *)UserRxBufferFS, _IOLBF, APP_RX_DATA_SIZE);
+	return DeviceList[fd]->_close_r( ptr, fd );
 }
+
+_ssize_t _write_r(struct _reent *ptr, int fd, const void *buf, size_t len)
+{
+	return DeviceList[fd]->_write_r( ptr, fd, buf, len );
+}
+
+_ssize_t _read_r (struct _reent *ptr, int fd, void *buf, size_t len)
+{
+	return DeviceList[fd]->_read_r( ptr, fd, buf, len );
+}
+
+
+/**
+ * @brief  Status of an open file/device.
+ * @note   Minimal implementation, all devices will be reported as special character device
+ * @param  ptr newlib re-entrance structure
+ * @param  fd File descriptor, identifier of the file to be queried
+ * @param  st Status buffer to be populated with a response
+ * @retval On success, zero is returned. On error, -1 is returned, and errno is set appropriately.
+ */
+int _fstat_r(struct _reent *ptr, int fd, struct stat *st)
+{
+	/* TODO remove to save cpu cycles */
+	memset (st, 0, sizeof (* st));
+	st->st_mode = S_IFCHR;
+	return 0;
+}
+
+
+int _stat_r(struct _reent *ptr, const char *name, struct stat *st)
+{
+	return _fstat_r(ptr, 0, st);
+}
+
+/**
+ * @brief Indicates whether or not the file/device "is a tty" terminal.
+ * @note  Internals of newlib evaluate the return value as an aid in determining how to set
+ * buffering mode (line buffer or not) when not specified via setvbuf().
+ * @param  ptr newlib re-entrance structure
+ * @param  fd File descriptor, identifier of the file to be statused
+ * @retval 1 indicates device behaves like a terminal, or 0 when it does not
+ */
+int _isatty_r(struct _reent *ptr, int fd)
+{
+	return 1;
+}
+
+
+/**
+ * @brief Device specific open for USB device
+ * @param flags Indicate type of access requested (read, write, read/write)
+ * @param mode Not used. When needed, provides additional options on top of the "flags" bit
+ * @retval The new file descriptor(fd), or -1 if an error occurred (in which case,
+ * 			errno is set appropriately).
+ */
+int usb1_open_r(struct _reent *ptr, int fd, int flags, int mode)
+{
+	return fd;
+}
+
+
+/**
+ * @brief  Device specific close for USB interface
+ * @param  ptr newlib re-entrance structure
+ * @param  fd File descriptor, data stream to be disconnected
+ * @retval On success, zero is returned. On error, -1 is returned, and errno is set appropriately.
+ */
+int usb1_close_r(struct _reent *ptr, int fd)
+{
+	ptr->_errno = ENOSYS;
+	return -1;
+}
+
 
 
 /**
@@ -94,7 +280,7 @@ void SetUsbRxBuffer(void)
   * @retval -1 = message not sent or timed out waiting
   * 		zero or positive indicates how many bytes transferred
   */
-_ssize_t _write_r(struct _reent *ptr, int file, const void *buf, size_t len)
+_ssize_t usb1_write_r(struct _reent *ptr, int file, const void *buf, size_t len)
 {
 	file = file; //not used, suppress compiler warning
 
@@ -197,7 +383,7 @@ void SYS_CDC_TxCompleteIsr(void)
   * @parm   count: buffer capacity, in bytes
   * @retval -1 = error, zero or positive indicates how many bytes transferred
   */
-_ssize_t _read_r (struct _reent *ptr, int file, void *buf, size_t count)
+_ssize_t usb1_read_r (struct _reent *ptr, int file, void *buf, size_t count)
 {
 	// USB driver has a fixed transfer request to the host of 64-bytes or less.
 	// Since the USB driver has direct write access to the IO library buffer, need
@@ -292,7 +478,7 @@ int _gettimeofday_r(struct _reent *ptr, struct timeval *tv, void *tzvp)
 
 /**
   * @brief	Allocates a region of memory large enough to hold an object of "size"
-  * @note	Redirect to use RTOS method for managing heap
+  * @note	Redirects to use RTOS method for managing heap
   * @param  size amount of memory to be allocated (as measured by sizeof operator)
   * @retval NULL unable to allocate requested memory, otherwise non-NULL pointer to
   * first element in the allocated memory region.
@@ -303,6 +489,15 @@ void *_malloc_r(struct _reent *ptr, size_t size)
 }
 
 
+/**
+ * @brief Allocates a new memory region, then copies existing elements over before freeing
+ * old memory region.
+ * @note   Redirects to use RTOS method for managing heap
+ * @param  new_size amount of memory to be allocated (as measured by sizeof operator)
+ * @param  old_ptr Memory region to be freed and returned to memory heap
+ * @retval NULL unable to allocate requested memory, otherwise non-NULL pointer to
+ * first element in the allocated memory region.
+ */
 void *_realloc_r (struct _reent *ptr, void *old_ptr, size_t new_size)
 {
 	  void *new_ptr = pvPortMalloc (new_size);
@@ -357,7 +552,8 @@ void _free_r(struct _reent *ptr, void *block)
 
 /**
   * @brief Required by Newlib C runtime to allocate memory during library initialization.
-  * @note  Compliant stub. See linker command file to set memory region used here
+  * @note   Compliant stub. Does not use linker command file to allocate memory region,
+  * see below for how to allocate memory in source file.
   * @param  incr amount of memory to be allocated/deallocated in bytes
   * @retval -1 unable to allocate/deallocate requested memory
   * 		pointer to first element in the new allocated memory region.
@@ -384,3 +580,72 @@ void *_sbrk_r(struct _reent *ptr, ptrdiff_t incr)
 	xTaskResumeAll();
 	return (void *) prev_heap_end;
 }
+
+
+/**
+ * -------------------------------- Unused stubs ----------------------------------------
+ */
+
+#if 0
+int _getpid(void)
+{
+	return 1;
+}
+
+int _kill(int pid, int sig)
+{
+	errno = EINVAL;
+	return -1;
+}
+
+void _exit (int status)
+{
+	_kill(status, -1);
+	while (1) {}		/* Make sure we hang here */
+}
+
+
+#endif
+
+
+#if 0
+
+int _lseek(int file, int ptr, int dir)
+{
+	return 0;
+}
+
+
+int _wait(int *status)
+{
+	errno = ECHILD;
+	return -1;
+}
+
+int _unlink(char *name)
+{
+	errno = ENOENT;
+	return -1;
+}
+
+
+int _link(char *old, char *new)
+{
+	errno = EMLINK;
+	return -1;
+}
+
+int _fork(void)
+{
+	errno = EAGAIN;
+	return -1;
+}
+
+int _execve(char *name, char **argv, char **env)
+{
+	errno = ENOMEM;
+	return -1;
+}
+
+#endif
+

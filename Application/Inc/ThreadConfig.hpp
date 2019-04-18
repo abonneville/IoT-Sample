@@ -32,7 +32,7 @@ static_assert(configMAX_PRIORITIES == (THREAD_PRIORITY_TIME_CRITICAL + 1),"Misma
  * 		  number of bytes on the stack
  */
 typedef uint16_t stack_size_t;
-constexpr stack_size_t STACK_SIZE_COMMANDS = (512 / 4);
-constexpr stack_size_t STACK_SIZE_RESPONSE = (512 / 4);
+constexpr stack_size_t STACK_SIZE_COMMANDS = (768 / 4);
+constexpr stack_size_t STACK_SIZE_RESPONSE = (768 / 4);
 
 #endif /* THREADCONFIG_HPP_ */

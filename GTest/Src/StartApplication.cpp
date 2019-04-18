@@ -62,12 +62,15 @@ class GTestThread : public cpp_freertos::Thread {
     protected:
 
         virtual void Run() {
-        	SetUsbTxBuffer();
-        	SetUsbRxBuffer();
+        	errno = 0;
+        	FILE *handleRx = std::freopen(Device.std_in, "r", stdin);
+        	app_SetBuffer(handleRx);
+        	FILE *handleTx = std::freopen(Device.std_out, "w", stdout);
+        	app_SetBuffer(handleTx);
 
         	while (true) {
             	// Wait for USB link to be established
-            	fgets(commandLineBuffer, sizeof(commandLineBuffer), stdin);
+            	fgets(commandLineBuffer, sizeof(commandLineBuffer), handleRx);
             	printf("\n**** Starting test now! ****\n\n");
             	fflush(stdout);
 

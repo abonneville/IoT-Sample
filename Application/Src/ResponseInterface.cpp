@@ -71,7 +71,10 @@ bool ResponseInterface::putResponse(ResponseId_t responseId, TickType_t Timeout)
  */
 void ResponseInterface::Run()
 {
-	SetUsbTxBuffer();
+	errno = 0;
+	FILE *handle = std::freopen(Device.std_out, "w", stdout);
+	app_SetBuffer(handle);
+
 	ResponseId_t msgId = RESPONSE_MSG_INVALID;
 
 	while (true) {
@@ -112,6 +115,7 @@ void ResponseInterface::Run()
 
 	}
 
+	std::fclose(stdout);
 }
 
 
