@@ -23,19 +23,19 @@
 #include <cstring>
 #include <cstdio>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "gtest.h"
 #include "thread.hpp"
 #include "sysdbg.h"
 #include "syscalls.h"
+#include "device.h"
 
 #include <StartApplication.hpp>
 #include "CommandInterface.hpp"
 #include "ResponseInterface.hpp"
 
 
-//using namespace cpp_freertos;
-using namespace std;
 
 
 /* Typedef -----------------------------------------------------------*/
@@ -46,6 +46,11 @@ using namespace std;
 
 /* Variables ---------------------------------------------------------*/
 static char commandLineBuffer[128] = {};
+
+/* These buffers are for generating and capturing large data sets */
+static uint8_t bigTest[BUFSIZ * 3];
+static uint8_t bigData[BUFSIZ * 3];
+
 //static ResponseInterface rspThread;
 //static CommandInterface cmdThread = CommandInterface(rspThread);
 
@@ -70,13 +75,13 @@ class GTestThread : public cpp_freertos::Thread {
 
         	while (true) {
             	// Wait for USB link to be established
-            	fgets(commandLineBuffer, sizeof(commandLineBuffer), handleRx);
-            	printf("\n**** Starting test now! ****\n\n");
-            	fflush(stdout);
+            	std::fgets(commandLineBuffer, sizeof(commandLineBuffer), handleRx);
+            	std::printf("\n**** Starting test now! ****\n\n");
+            	std::fflush(stdout);
 
-            	printf("\n Results: %d \n", RUN_ALL_TESTS());
-            	printf("**** Testing complete! ****\n");
-            	fflush(stdout);
+            	std::printf("\n Results: %d \n", RUN_ALL_TESTS());
+            	std::printf("**** Testing complete! ****\n");
+            	std::fflush(stdout);
             }
         };
 
@@ -86,10 +91,36 @@ class GTestThread : public cpp_freertos::Thread {
 
 GTestThread thread1;
 
+
+class BaseTest : public ::testing::Test {
+public:
+	void SetUp()
+	{
+		errno = 0;
+		SysCheckMemory check = _SysCheckMemory();
+	}
+
+	void TearDown()
+	{
+		EXPECT_EQ(errno, 0);
+	}
+protected:
+private:
+};
+
+// TODO modify validateBuffer to use class BaseTest
+class malloc : public BaseTest {};
+class realloc : public BaseTest {};
+class calloc : public BaseTest {};
+class fopen : public BaseTest {};
+class fwrite : public BaseTest {};
+class fread : public BaseTest {};
+class crc : public BaseTest{};
+
+
 /* Function prototypes -----------------------------------------------*/
 
 /* External functions ------------------------------------------------*/
-
 
 
 
@@ -116,6 +147,8 @@ void StartApplication(void)
 	}
 }
 
+
+#if 1
 TEST(cleanLineBuffer, EmptyBuffer) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
@@ -134,11 +167,11 @@ TEST(cleanLineBuffer, LeadingWhiteSpace) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
 
-	strncpy(testBuffer.data(), " Hello", testBuffer.size());
+	std::strncpy(testBuffer.data(), " Hello", testBuffer.size());
 	EXPECT_EQ(&testBuffer[6], cleanLineBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello", testBuffer.data());
 
-	strncpy(testBuffer.data(), "   Hello", testBuffer.size());
+	std::strncpy(testBuffer.data(), "   Hello", testBuffer.size());
 	EXPECT_EQ(&testBuffer[6], cleanLineBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello", testBuffer.data());
 }
@@ -148,11 +181,11 @@ TEST(cleanLineBuffer, TrailingWhiteSpace) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
 
-	strncpy(testBuffer.data(), "Hello ", testBuffer.size());
+	std::strncpy(testBuffer.data(), "Hello ", testBuffer.size());
 	EXPECT_EQ(&testBuffer[6], cleanLineBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello", testBuffer.data());
 
-	strncpy(testBuffer.data(), "Hello   ", testBuffer.size());
+	std::strncpy(testBuffer.data(), "Hello   ", testBuffer.size());
 	EXPECT_EQ(&testBuffer[6], cleanLineBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello", testBuffer.data());
 }
@@ -161,7 +194,7 @@ TEST(cleanLineBuffer, MiddleWhiteSpace) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
 
-	strncpy(testBuffer.data(), " Hello  World ", testBuffer.size());
+	std::strncpy(testBuffer.data(), " Hello  World ", testBuffer.size());
 	EXPECT_EQ(&testBuffer[12], cleanLineBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello World", testBuffer.data());
 
@@ -211,11 +244,11 @@ TEST(validateBuffer, LeadingWhiteSpace) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
 
-	strncpy(testBuffer.data(), " Hello\n", testBuffer.size());
+	std::strncpy(testBuffer.data(), " Hello\n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[7], validateBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello ", testBuffer.data());
 
-	strncpy(testBuffer.data(), "   Hello\n", testBuffer.size());
+	std::strncpy(testBuffer.data(), "   Hello\n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[7], validateBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello ", testBuffer.data());
 }
@@ -225,11 +258,11 @@ TEST(validateBuffer, TrailingWhiteSpace) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
 
-	strncpy(testBuffer.data(), "Hello \n", testBuffer.size());
+	std::strncpy(testBuffer.data(), "Hello \n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[7], validateBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello ", testBuffer.data());
 
-	strncpy(testBuffer.data(), "Hello   \n", testBuffer.size());
+	std::strncpy(testBuffer.data(), "Hello   \n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[7], validateBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello ", testBuffer.data());
 }
@@ -238,11 +271,11 @@ TEST(validateBuffer, MiddleWhiteSpace) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
 
-	strncpy(testBuffer.data(), " Hello  World \n", testBuffer.size());
+	std::strncpy(testBuffer.data(), " Hello  World \n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[13], validateBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello World ", testBuffer.data());
 
-	strncpy(testBuffer.data(), "Hello   World\n", testBuffer.size());
+	std::strncpy(testBuffer.data(), "Hello   World\n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[13], validateBuffer(testBuffer.begin(), testBuffer.end()));
 	ASSERT_STREQ("Hello World ", testBuffer.data());
 }
@@ -313,40 +346,40 @@ TEST(_SysMemCheckpoint, FullHeap) {
 
 
 
-TEST(malloc, ZeroElement){
+TEST_F(malloc, ZeroElement){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)malloc(0);
+	char *ptr = (char *)std::malloc(0);
 	EXPECT_EQ(ptr, nullptr);
 
 	/* Zero size, no deallocation necessary */
 	// free(ptr);
 }
 
-TEST(malloc, OneElement){
+TEST_F(malloc, OneElement){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)malloc(1);
+	char *ptr = (char *)std::malloc(1);
 	EXPECT_NE(ptr, nullptr);
 
 	free(ptr);
 }
 
-TEST(malloc, ManyElements){
+TEST_F(malloc, ManyElements){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)malloc(13);
+	char *ptr = (char *)std::malloc(13);
 	EXPECT_NE(ptr, nullptr);
-	strcpy(ptr,"no leak now");
+	std::strcpy(ptr,"no leak now");
 
 	free(ptr);
 }
 
 
-TEST(malloc, OutOfMemory){
+TEST_F(malloc, OutOfMemory){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)malloc(100000);
+	char *ptr = (char *)std::malloc(100000);
 	EXPECT_EQ(ptr, nullptr);
 
 	/* Insufficient memory, no deallocation necessary */
@@ -355,134 +388,519 @@ TEST(malloc, OutOfMemory){
 
 
 
-TEST(realloc, ZeroElement){
+TEST_F(realloc, ZeroElement){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)malloc(12);
-	strcpy(ptr,"cool");
-	char *nptr = (char *)realloc(ptr, 0);
+	char *ptr = (char *)std::malloc(12);
+	std::strcpy(ptr,"cool");
+	char *nptr = (char *)std::realloc(ptr, 0);
 	EXPECT_EQ(nptr, nullptr);
 
-	free(ptr);
+	std::free(ptr);
 	/* Not required, zero size block */
 	//free(nptr);
 }
 
 
-TEST(realloc, OneElement){
+TEST_F(realloc, OneElement){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)malloc(12);
-	strcpy(ptr,"cool");
-	char *nptr = (char *)realloc(ptr, 1);
+	char *ptr = (char *)std::malloc(12);
+	std::strcpy(ptr,"cool");
+	char *nptr = (char *)std::realloc(ptr, 1);
 	EXPECT_NE(ptr, nptr);
 	EXPECT_EQ(nptr[0], 'c');
 
 	/* Not required, realloc already moved and freed old location */
 	//free(ptr);
-	free(nptr);
+	std::free(nptr);
 }
 
 
-TEST(realloc, ManyElements){
+TEST_F(realloc, ManyElements){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)malloc(12);
+	char *ptr = (char *)std::malloc(12);
 	strcpy(ptr,"cool");
-	char *nptr = (char *)realloc(ptr, 13);
+	char *nptr = (char *)std::realloc(ptr, 13);
 	EXPECT_NE(ptr, nptr);
 	ASSERT_STREQ("cool", nptr);
 
 	/* Not required, realloc already moved and freed old location */
 	//free(ptr);
-	free(nptr);
+	std::free(nptr);
 }
 
 
-TEST(realloc, NullPtr){
+TEST_F(realloc, NullPtr){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)realloc(NULL, 13);
+	char *ptr = (char *)std::realloc(NULL, 13);
 	EXPECT_NE(ptr, nullptr);
 
-	free(ptr);
+	std::free(ptr);
 }
 
-TEST(realloc, NullPtr_ZeroElement){
+TEST_F(realloc, NullPtr_ZeroElement){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)realloc(NULL, 0);
+	char *ptr = (char *)std::realloc(NULL, 0);
 	EXPECT_EQ(ptr, nullptr);
 
 	/* Not required, no memory allocated */
-	//free(ptr);
-	//free(nptr);
+	//std::free(ptr);
+	//std::free(nptr);
 }
 
 
-TEST(realloc, OutOfMemory){
+TEST_F(realloc, OutOfMemory){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)realloc(NULL, 100000);
+	char *ptr = (char *)std::realloc(NULL, 100000);
 	EXPECT_EQ(ptr, nullptr);
 
 	/* Insufficient memory, no deallocation necessary */
-	// free(ptr);
+	// std::free(ptr);
 }
 
 
 
-TEST(calloc, ZeroElement){
+TEST_F(calloc, ZeroElement){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)calloc(0, 0);
+	char *ptr = (char *)std::calloc(0, 0);
 	EXPECT_EQ(ptr, nullptr);
 
-	ptr = (char *)calloc(0, 1);
+	ptr = (char *)std::calloc(0, 1);
 	EXPECT_EQ(ptr, nullptr);
 
-	ptr = (char *)calloc(1, 0);
+	ptr = (char *)std::calloc(1, 0);
 	EXPECT_EQ(ptr, nullptr);
 
 	/* Not required, no memory allocated */
-	//free(ptr);
+	//std::free(ptr);
 }
 
 
-TEST(calloc, OneElement){
+TEST_F(calloc, OneElement){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)calloc(1, 1);
+	char *ptr = (char *)std::calloc(1, 1);
 	EXPECT_NE(ptr, nullptr);
 	EXPECT_EQ(0, ptr[0]);
 
-	free(ptr);
+	std::free(ptr);
 }
 
 
-TEST(calloc, ManyElements){
+TEST_F(calloc, ManyElements){
 	SysCheckMemory check = _SysCheckMemory();
 
 	char val[20] = {};
-	char *ptr = (char *)calloc(1,12);
+	char *ptr = (char *)std::calloc(1,12);
 	EXPECT_NE(ptr, nullptr);
 	EXPECT_EQ(0, memcmp(val, ptr, 12));
 
-	char *nptr = (char *)calloc(5,4);
+	char *nptr = (char *)std::calloc(5,4);
 	EXPECT_NE(nptr, nullptr);
 	EXPECT_EQ(0, memcmp(val, nptr, 20));
 
-	free(ptr);
-	free(nptr);
+	std::free(ptr);
+	std::free(nptr);
 }
 
-TEST(calloc, OutOfMemory){
+TEST_F(calloc, OutOfMemory){
 	SysCheckMemory check = _SysCheckMemory();
 
-	char *ptr = (char *)calloc(1, 100000);
+	char *ptr = (char *)std::calloc(1, 100000);
 	EXPECT_EQ(ptr, nullptr);
 
 	/* Insufficient memory, no deallocation necessary */
-	// free(ptr);
+	// std::free(ptr);
 }
 
+
+
+#else
+
+TEST_F(fopen, ReadFlags)
+{
+	errno = 0;
+	FILE *handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "r+");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "rb");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "rb+");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "r+b");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fopen, WriteFlags)
+{
+	errno = 0;
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "w+");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "wb");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "wb+");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "w+b");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fopen, AppendFlags)
+{
+	/*
+	 * lseek() syscall is not implemented at this time, therefore "append" functionality
+	 * is not supported.
+	 */
+	errno = 0;
+	FILE *handle = std::fopen(Device.storage, "a");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, EINVAL);
+
+	errno = 0;
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fopen, InvalidFlags)
+{
+	errno = 0;
+	FILE *handle = std::fopen(Device.storage, "R");
+	EXPECT_EQ(handle, nullptr);
+	EXPECT_EQ(errno, EINVAL);
+
+	errno = 0;
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+
+TEST_F(fopen, AlreadyOpen)
+{
+	errno = 0;
+	FILE *handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(errno, 0);
+
+	FILE *handle2 = std::fopen(Device.storage, "r");
+	EXPECT_EQ(handle2, nullptr);
+	EXPECT_EQ(errno, EACCES);
+
+	errno = 0;
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fopen, AlreadyClosed)
+{
+	errno = 0;
+	FILE *handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+/***************************************************************************************/
+
+TEST_F(fwrite, ZeroLength)
+{
+	uint8_t data[] = {1, 2, 3, 4, 5};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+
+	EXPECT_EQ(std::fwrite(data, sizeof(data[0]), 0, handle), 0u);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+TEST_F(fwrite, OneByte)
+{
+	uint8_t data[] = {1, 2, 3, 4, 5};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+
+	EXPECT_EQ(std::fwrite(data, sizeof(data[0]), 1, handle), 1u);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fwrite, ManyBytes)
+{
+	uint8_t data[] = {1, 2, 3, 4, 5};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+
+	EXPECT_EQ(std::fwrite(data, sizeof(data[0]), 5, handle), 5u);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fwrite, ManyInts)
+{
+	uint32_t data[] = {1, 2, 3, 4, 5};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+
+	EXPECT_EQ(std::fwrite(data, sizeof(data[0]), 5, handle), 5u);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+TEST_F(fwrite, ToLarge)
+{
+	uint8_t data[] = {1, 2, 3, 4, 5};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+
+	/* fwrite will fail, but the exact number returned is dependent on the size of the internal
+	 * buffer. The value returned will likely be a multiple of BUFSIZE until storage was filled.
+	 */
+	EXPECT_GT(std::fwrite(data, sizeof(data[0]), 10000, handle), 5u);
+	EXPECT_EQ(std::ferror(handle), 1);
+	EXPECT_EQ(std::feof(handle), 0);
+	EXPECT_EQ(errno, ENOSPC);
+
+	errno = 0;
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(std::feof(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+/***************************************************************************************/
+
+TEST_F(fread, ZeroLength)
+{
+	uint8_t data[5] = {};
+	FILE *handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+
+	EXPECT_EQ(std::fread(data, sizeof(data[0]), 0, handle), 0u);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fread, OneByte)
+{
+	uint8_t test[] = {1, 2, 3, 4, 5};
+	uint8_t data[5] = {};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::fwrite(test, sizeof(test[0]), 1, handle), 1u);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::fread(data, sizeof(data[0]), 1, handle), 1u);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	EXPECT_EQ(std::memcmp(test, data, 1), 0);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fread, ManyBytes)
+{
+	uint8_t test[] = {1, 2, 3, 4, 5};
+	uint8_t data[5] = {};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::fwrite(test, sizeof(test[0]), 5, handle), 5u);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::fread(data, sizeof(data[0]), 5, handle), 5u);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	EXPECT_EQ(std::memcmp(test, data, 5), 0);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+#if 0 // Not supported, with buffering off only 1-byte / 8-byte row of flash is available
+TEST_F(fread, NoBuffering)
+{
+	uint8_t test[] = {1, 2, 3, 4, 5};
+	uint8_t data[5] = {};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::setvbuf(handle, nullptr, _IONBF, 0), 0);
+	EXPECT_EQ(std::fwrite(test, sizeof(test[0]), 5, handle), 5u);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::setvbuf(handle, nullptr, _IONBF, 0), 0);
+	EXPECT_EQ(std::fread(data, sizeof(data[0]), 5, handle), 5u);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	EXPECT_EQ(std::memcmp(test, data, 5), 0);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+#endif
+
+
+
+TEST_F(fread, ManyInts)
+{
+	uint32_t test[] = {1, 2, 3, 4, 5};
+	uint32_t data[5] = {};
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::fwrite(test, sizeof(test[0]), 5, handle), 5u);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::fread(data, sizeof(data[0]), 5, handle), 5u);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	EXPECT_EQ(std::memcmp(test, data, 5), 0);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fread, MultiBuffer)
+{
+	/*
+	 * To verify sequential access is guaranteed across multiple transfers,
+	 * this test forces multiple buffer transfers to access the memory.
+	 */
+	constexpr size_t TEST_SIZE = (BUFSIZ * 2);
+	srand(11);
+	for (uint32_t index = 0; index < TEST_SIZE; index++) {
+		bigTest[index] = rand();
+	}
+
+	FILE *handle = std::fopen(Device.storage, "w");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::fwrite(bigTest, sizeof(bigTest[0]), TEST_SIZE, handle), TEST_SIZE);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+	EXPECT_EQ(std::fread(bigData, sizeof(bigData[0]), TEST_SIZE, handle), TEST_SIZE);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(std::feof(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	EXPECT_EQ(std::memcmp(bigTest, bigData, TEST_SIZE), 0);
+
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(std::feof(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+TEST_F(fread, ToLarge)
+{
+	FILE *handle = std::fopen(Device.storage, "r");
+	EXPECT_NE(handle, nullptr);
+
+	/* fread will fail, but the exact number returned is dependent on the size of the internal
+	 * buffer. The value returned will likely be a multiple of BUFSIZ until storage was exhausted.
+	 */
+	EXPECT_GT(std::fread(bigData, sizeof(bigData[0]), BUFSIZ * 4, handle), 5u);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(std::feof(handle), 1);
+	EXPECT_EQ(errno, 0);
+
+	errno = 0;
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(std::feof(handle), 0);
+	EXPECT_EQ(errno, 0);
+}
+
+
+/***************************************************************************************/
+TEST_F(crc, Verification)
+{
+	uint8_t test[9] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+
+	EXPECT_EQ(crc_mpeg2(test, &test[9]), 0x0376E6E7u);
+}
+#endif

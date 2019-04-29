@@ -20,46 +20,70 @@
  *
  */
 
-#ifndef RESPONSEINTERFACE_HPP_
-#define RESPONSEINTERFACE_HPP_
+
+#ifndef USERCONFIG_HPP_
+#define USERCONFIG_HPP_
+
+#include <memory>
+#include "CommandInterface.hpp"
 #include "thread.hpp"
-#include "queue.hpp"
-
-/**
- * @brief Defines a list of response messages that are available. The ResponseInterface
- * will generate the requested message and transmit to an external host.
- */
-typedef enum {
-	RESPONSE_MSG_AWS_STATUS,
-	RESPONSE_MSG_HELP,
-	RESPONSE_MSG_INVALID,
-	RESPONSE_MSG_PROMPT,
-	RESPONSE_MSG_STATUS,
-	RESPONSE_MSG_VERSION,
-	RESPONSE_MSG_WIFI_STATUS
-}ResponseId_t;
 
 
-
-/**
- * @brief Implements a persistent thread responsible for generating and transmitting
- * 		  response messages back to an external host.
- */
-class ResponseInterface : public cpp_freertos::Thread
+class UserConfig
 {
+	friend CommandInterface;
+
 	public:
-		ResponseInterface();
-		~ResponseInterface();
-		bool putResponse(ResponseId_t responseId, TickType_t Timeout = portMAX_DELAY);
+		typedef std::array<uint8_t, 256> Key_t;
+		typedef std::array<uint8_t, 32> Password_t;
+		typedef std::array<uint8_t, 32> Ssid_t;
+
+		typedef struct {
+			Key_t key;
+			uint16_t keySize;
+		}Aws_t;
+
+		typedef struct {
+			bool isWifiOn;
+			Password_t password;
+			Ssid_t ssid;
+		} Wifi_t;
+
+		UserConfig() { GetConfig(); };
+
+		bool GetAwsConfig(const Aws_t &);
+		void ReleaseAwsConfig();
+
+		bool GetWifiConfig(const Wifi_t &);
+		void RelaseWifiConfig();
 
 	protected:
-		void Run();
 
 	private:
-		cpp_freertos::Queue *msgQueue;
+		cpp_freertos::MutexStandard AwsConfigGuard;
+		cpp_freertos::MutexStandard WifiConfigGuardLock;
+
+		typedef struct {
+			uint16_t tableSize;
+			uint16_t tableVersion;
+			Aws_t aws;
+			Wifi_t wifi;
+			uint32_t checksum;
+		}Config_t;
+
+		Config_t config;
+		static constexpr uint16_t TableVersion = 1;
+		static constexpr uint16_t TableSize  = sizeof(Config_t);
+
+		void GetConfig();
+		bool SetConfig();
+
+		bool SetAwsKey(std::unique_ptr<Key_t> key, uint16_t size);
+
+		bool SetWifiOn(bool );
+		bool SetWifiPassword(Password_t &password);
+		bool SetWifiSsid(Ssid_t &ssid);
+
 };
 
-
-
-
-#endif /* RESPONSEINTERFACE_HPP_ */
+#endif /* USERCONFIG_HPP_ */

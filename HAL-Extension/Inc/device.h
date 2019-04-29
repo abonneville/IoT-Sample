@@ -20,47 +20,35 @@
  *
  */
 
-#ifndef COMMANDINTERFACE_HPP_
-#define COMMANDINTERFACE_HPP_
+#include <reent.h> /* Reentrant versions of system calls.  */
+#include <stddef.h>
+#include <stdint.h>
 
-#include <array>
-#include "thread.hpp"
-#include "ResponseInterface.hpp"
+#ifndef DEVICE_H_
+#define DEVICE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/**
- * @brief Implements a persistent thread responsible for; command reception, parsing, and
- * 		  execution
- */
-class CommandInterface : public cpp_freertos::Thread
-{
+int usb1_open_r(struct _reent *ptr, int fd, int flags, int mode);
+int usb1_close_r(struct _reent *ptr, int fd);
+_ssize_t usb1_write_r(struct _reent *ptr, int fd, const void *buf, size_t len);
+_ssize_t usb1_read_r (struct _reent *ptr, int fd, void *buf, size_t len);
 
-    public:
-		typedef std::array<char, 128> Buffer_t;
-
-		CommandInterface(ResponseInterface &handle);
-
-		ResponseId_t AwsCmdHandler(Buffer_t::const_iterator, Buffer_t::const_iterator);
-		ResponseId_t ResetCmdHandler();
-		ResponseId_t WifiCmdHandler(Buffer_t::const_iterator, Buffer_t::const_iterator);
+void SYS_CDC_TxCompleteIsr(void);
+void SYS_CDC_RxMessageIsr(uint32_t length);
 
 
-    protected:
-        virtual void Run();
+int storage_open_r(struct _reent *ptr, int fd, int flags, int mode);
+int storage_close_r(struct _reent *ptr, int fd);
+_ssize_t storage_write_r(struct _reent *ptr, int fd, const void *buf, size_t len);
+_ssize_t storage_read_r (struct _reent *ptr, int fd, void *buf, size_t len);
 
-    private:
-        Buffer_t commandLineBuffer;
-        ResponseInterface &responseHandle;
-};
+uint32_t crc_mpeg2(uint8_t *first, uint8_t *last);
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
-bool invalidChar (char c);
-
-template <typename bufIter>
-bufIter cleanLineBuffer(bufIter first, bufIter last);
-
-template <typename bufIter>
-bufIter validateBuffer(bufIter first, bufIter last);
-
-
-#endif /* COMMANDINTERFACE_HPP_ */
+#endif /* DEVICE_H_ */

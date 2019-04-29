@@ -1,20 +1,37 @@
 /*
- * CommandInterface.cpp
+ * Copyright (C) 2019 Andrew Bonneville.  All Rights Reserved.
  *
- *  Created on: Mar 27, 2019
- *      Author: Andrew
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
+
 #include <syscalls.h>
 #include <ThreadConfig.hpp>
 #include <cstdio>
 #include <algorithm>
 #include <cstring>
 
+#include "device.h"
 
 #include "CommandInterface.hpp"
 #include "ResponseInterface.hpp"
+#include "UserConfig.hpp"
 
-//using namespace cpp_freertos;
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -24,13 +41,20 @@
 #define PARSE_ONE_WORD_CMD(buf, cmd) 	std::equal(buf.cbegin(), buf.cbegin() + sizeof(cmd), cmd)
 #define PARSE_MULTI_WORD_CMD(buf, cmd) 	std::equal(buf.cbegin(), buf.cbegin() + sizeof(cmd) - 1, cmd)
 
+#define LastWordMatch(strInter, cmd) 	std::equal(strInter, strInter + sizeof(cmd)    , cmd)
+#define NextWordMatch(strInter, cmd) 	std::equal(strInter, strInter + sizeof(cmd) - 1, cmd)
+
+
 /* Private variables ---------------------------------------------------------*/
+UserConfig userConfig;
+
+static constexpr char cmdPrompt[] = "\n";
 static constexpr char cmdAws[] = "aws ";
 static constexpr char cmdHelp[] = "help ";
 static constexpr char cmdReset[] = "reset ";
 static constexpr char cmdStatus[] = "status ";
-static constexpr char cmdVersion[] = "version ";
 static constexpr char cmdWifi[] = "wifi ";
+static constexpr char cmdVersion[] = "version ";
 
 static constexpr char fieldKey[] = "key ";
 static constexpr char fieldOff[] = "off ";
@@ -52,6 +76,7 @@ CommandInterface::CommandInterface(ResponseInterface &handle)
 	  responseHandle(handle)
 {
 	Start();
+
 }
 
 
@@ -121,6 +146,18 @@ void CommandInterface::Run()
     		}
     		break;
 
+    	case '\n':
+    		/*
+    		 * TODO: known limitations:
+    		 *  - extra white spaces generate an invalid command instead of just a prompt
+    		 *
+    		 */
+    		if (PARSE_ONE_WORD_CMD(commandLineBuffer, cmdPrompt)) {
+    			responseId = RESPONSE_MSG_PROMPT;
+    		}
+    		break;
+
+
     	default:
     		break;
     	}
@@ -154,7 +191,156 @@ void CommandInterface::Run()
  */
 ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buffer_t::const_iterator last)
 {
-	return RESPONSE_MSG_AWS_STATUS;
+	std::unique_ptr<UserConfig::Key_t> newKey = std::make_unique<UserConfig::Key_t>();
+	Buffer_t::const_iterator lineEnd;
+	size_t lineSize = 0;
+	size_t keySize = 0;
+
+	ResponseId_t responseId = RESPONSE_MSG_INVALID;
+
+	switch (first[0]) {
+	case 'k':
+		if (LastWordMatch(first, fieldKey)) {
+			/*
+			 * At this point, we have validated the request to store a new key. Next we need to poll
+			 * until we get the entire key. Key length can be 0 up to max length bytes.
+			 */
+			while (keySize < sizeof(UserConfig::Key_t) ){
+				std::fgets(commandLineBuffer.begin(), commandLineBuffer.size(), stdin);
+
+				lineEnd = std::find(commandLineBuffer.cbegin(), commandLineBuffer.cend(), '\n');
+				if (lineEnd == commandLineBuffer.cend()) {
+					/* invalid contents, missing terminator */
+					keySize = 0;
+					break;
+				}
+
+				lineSize = (lineEnd - commandLineBuffer.cbegin());
+				if (lineSize == 0) {
+					/* Transfer complete */
+					break;
+				}
+
+				if ( (keySize + lineSize) <= sizeof(UserConfig::Key_t) ) {
+					std::memcpy(newKey->data() + keySize, commandLineBuffer.cbegin(), lineSize);
+					keySize += lineSize;
+				}
+				else {
+					/* Key is to large, discard  */
+					keySize = 0;
+					break;
+				}
+
+			}
+
+			if (keySize > 0) {
+				if (userConfig.SetAwsKey(std::move(newKey), keySize) == true) {
+					responseId = RESPONSE_MSG_PROMPT;
+				}
+			}
+		}
+		break;
+
+	case 's':
+		if (LastWordMatch(first, fieldStatus)) {
+			responseId = RESPONSE_MSG_AWS_STATUS;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	return responseId;
+
+#if 0
+	volatile _ssize_t status;
+
+	FILE *handle = std::fopen(Device.storage, "wb");
+
+ 	if (handle != nullptr) {
+		Aws_t *old = new(Aws_t);
+		std::memcpy(old->key, config.aws.key, sizeof(config.aws.key));
+		std::memcpy(config.aws.key, "hello", sizeof("hello"));
+		status = std::fwrite(&config, sizeof(Config_t), 1, handle);
+
+		if ( (status != 1) || (std::ferror(handle) == 1) ) {
+			std::memcpy(config.aws.key, old->key, sizeof(config.aws.key));
+		}
+
+		delete(old);
+	}
+
+	std::fclose(handle);
+
+#endif
+
+
+#if 0
+	uint8_t data[] = {5, 4, 3, 2, 1};
+	FILE *handle = std::fopen(Device.storage, "wb");
+	app_SetBuffer(handle);
+
+
+//	status = std::fwrite(data, sizeof(data[0]), 5, handle);
+//	status = std::fwrite(data, sizeof(data[0]), 2049, handle); // 2049 on fwrite, -1 on fflush, __SERR set during fflush
+//	status = std::fwrite(data,            2049,    1, handle); //    1 on fwrite, -1 on fflush, __SERR set during fflush
+	status = std::fwrite(data, sizeof(data[0]), 9999, handle); // 3072 on fwrite,  0 on fflush, __SERR set during fwrite
+	status = std::fflush(handle);
+	status = std::ferror(handle);
+//	std::clearerr(handle);
+	status = std::fclose(handle);
+	errno = errno;
+#endif
+
+#if 0
+	uint8_t test[] = {5, 4, 3, 2, 1};
+	uint8_t data[5] = {};
+	FILE *handle = std::fopen(Device.storage, "wb");
+//	status = std::setvbuf(handle, nullptr, _IONBF, 0);
+//	app_SetBuffer(handle);
+	status = std::fwrite(test, sizeof(test[0]), 1, handle);
+	status = std::fwrite(&test[1], sizeof(test[0]), 4, handle);
+	status = std::fclose(handle);
+
+	handle = std::fopen(Device.storage, "r");
+
+	status = std::fread(data, sizeof(data[0]), 2, handle);
+	status = std::fread(&data[2], sizeof(data[0]), 3, handle);
+
+	status = std::fclose(handle);
+
+	status = std::memcmp(data, test, 5);
+#endif
+
+#if 0
+	uint8_t test[13] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', 0, 0, 0, 0};
+
+	uint32_t result, check;
+	result = crc_mpeg2(&test[0], &test[9]);
+
+	check = result;
+	test[12] = (check      ) & 0xFF;
+	test[11] = (check >>  8) & 0xFF;
+	test[10] = (check >> 16) & 0xFF;
+	test[ 9] = (check >> 24) & 0xFF;
+
+	result = crc_mpeg2(test, &test[13]);
+
+	uint8_t test[17] = {0x00, 0x09, 0xFF , 0xFF, '1', '2', '3', '4', '5', '6', '7', '8', '9', 0 ,0, 0, 0};
+
+	uint32_t result, check;
+	result = crc_mpeg2(&test[0], &test[13]);
+
+	check = result;
+	test[16] = (check      ) & 0xFF;
+	test[15] = (check >>  8) & 0xFF;
+	test[14] = (check >> 16) & 0xFF;
+	test[13] = (check >> 24) & 0xFF;
+
+	result = crc_mpeg2(test, &test[17]);
+#endif
+
 }
 
 
@@ -177,7 +363,38 @@ ResponseId_t CommandInterface::ResetCmdHandler()
  */
 ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Buffer_t::const_iterator last)
 {
-	return RESPONSE_MSG_WIFI_STATUS;
+	ResponseId_t responseId = RESPONSE_MSG_INVALID;
+
+	switch (first[0]) {
+	case 'o':
+		if (LastWordMatch(first, fieldOff)) {
+			responseId = RESPONSE_MSG_WIFI_STATUS;
+		}
+		else if (LastWordMatch(first, fieldOn)) {
+			responseId = RESPONSE_MSG_WIFI_STATUS;
+		}
+		break;
+
+	case 'p':
+		if (NextWordMatch(first, fieldPassword)) {
+			responseId = RESPONSE_MSG_WIFI_STATUS;
+		}
+		break;
+
+	case 's':
+		if (NextWordMatch(first, fieldSsid)) {
+			responseId = RESPONSE_MSG_WIFI_STATUS;
+		}
+		else if (LastWordMatch(first, fieldStatus)) {
+			responseId = RESPONSE_MSG_WIFI_STATUS;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	return responseId;
 }
 
 

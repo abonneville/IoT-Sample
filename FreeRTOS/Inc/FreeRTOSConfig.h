@@ -49,6 +49,8 @@
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS 0
 #define configUSE_POSIX_ERRNO 					0
 
+//#define pdMS_TO_TICKS( xTimeInMs )    ( ( TickType_t ) ( ( ( uint64_t ) ( xTimeInMs ) * ( uint64_t ) configTICK_RATE_HZ ) / ( uint64_t ) 1000 ) )
+
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         0
 #define configSUPPORT_DYNAMIC_ALLOCATION        1

@@ -36,14 +36,12 @@ typedef struct {
 	char std_in[7];
 	char std_out[8];
 	char std_err[8];
+	char storage[8];
 } Device_t;
 
 extern const Device_t Device;
 
 void app_SetBuffer(FILE *);
-
-void SYS_CDC_TxCompleteIsr(void);
-void SYS_CDC_RxMessageIsr(uint32_t length);
 
 #ifdef __cplusplus
 }
