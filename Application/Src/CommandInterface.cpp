@@ -37,11 +37,7 @@
 /* Private define ------------------------------------------------------------*/
 
 /* Private macro ---------- ---------------------------------------------------*/
-#define PARSE_ONE_WORD_CMD(buf, cmd) 	std::equal(buf.cbegin(), buf.cbegin() + sizeof(cmd), cmd)
-#define PARSE_MULTI_WORD_CMD(buf, cmd) 	std::equal(buf.cbegin(), buf.cbegin() + sizeof(cmd) - 1, cmd)
-
-#define LastWordMatch(strInter, cmd) 	std::equal(strInter, strInter + sizeof(cmd)    , cmd)
-#define NextWordMatch(strInter, cmd) 	std::equal(strInter, strInter + sizeof(cmd) - 1, cmd)
+#define ParseCmdWord(strInter, cmd) 	std::equal(strInter, strInter + sizeof(cmd) - 1, cmd)
 
 
 /* Private variables ---------------------------------------------------------*/
@@ -49,18 +45,18 @@ extern class UserConfig userConfig;
 
 static constexpr char cmdPrompt[] = "\n";
 static constexpr char cmdAws[] = "aws ";
-static constexpr char cmdHelp[] = "help ";
-static constexpr char cmdReset[] = "reset ";
-static constexpr char cmdStatus[] = "status ";
+static constexpr char cmdHelp[] = "help\n";
+static constexpr char cmdReset[] = "reset\n";
+static constexpr char cmdStatus[] = "status\n";
 static constexpr char cmdWifi[] = "wifi ";
-static constexpr char cmdVersion[] = "version ";
+static constexpr char cmdVersion[] = "version\n";
 
-static constexpr char fieldKey[] = "key ";
-static constexpr char fieldOff[] = "off ";
-static constexpr char fieldOn[] = "on ";
+static constexpr char fieldKey[] = "key\n";
+static constexpr char fieldOff[] = "off\n";
+static constexpr char fieldOn[] = "on\n";
 static constexpr char fieldPassword[] = "password ";
 static constexpr char fieldSsid[] = "ssid ";
-static constexpr char fieldStatus[] = "status ";
+static constexpr char fieldStatus[] = "status\n";
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -110,48 +106,43 @@ void CommandInterface::Run()
     	switch (commandLineBuffer[0]) {
 
     	case 'a':
-    		if (PARSE_MULTI_WORD_CMD(commandLineBuffer, cmdAws)) {
-    			responseId = AwsCmdHandler(commandLineBuffer.begin() + sizeof(cmdAws) - 1, lineEnd);
+    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdAws)) {
+    			responseId = AwsCmdHandler(commandLineBuffer.cbegin() + sizeof(cmdAws) - 1, lineEnd);
     		}
     		break;
 
     	case 'h':
-    		if (PARSE_ONE_WORD_CMD(commandLineBuffer, cmdHelp)) {
+    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdHelp)) {
     			responseId = RESPONSE_MSG_HELP;
     		}
     		break;
 
     	case 'r':
-    		if (PARSE_ONE_WORD_CMD(commandLineBuffer, cmdReset)) {
+    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdReset)) {
     			responseId = ResetCmdHandler();
     		}
     		break;
 
     	case 's':
-    		if (PARSE_ONE_WORD_CMD(commandLineBuffer, cmdStatus)) {
+    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdStatus)) {
     			responseId = RESPONSE_MSG_STATUS;
     		}
     		break;
 
     	case 'v':
-    		if (PARSE_ONE_WORD_CMD(commandLineBuffer, cmdVersion)) {
+    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdVersion)) {
     			responseId = RESPONSE_MSG_VERSION;
     		}
     		break;
 
     	case 'w':
-    		if (PARSE_MULTI_WORD_CMD(commandLineBuffer, cmdWifi)) {
-    			responseId = WifiCmdHandler(commandLineBuffer.begin() + sizeof(cmdWifi) - 1, lineEnd);
+    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdWifi)) {
+    			responseId = WifiCmdHandler(commandLineBuffer.cbegin() + sizeof(cmdWifi) - 1, lineEnd);
     		}
     		break;
 
     	case '\n':
-    		/*
-    		 * TODO: known limitations:
-    		 *  - extra white spaces generate an invalid command instead of just a prompt
-    		 *
-    		 */
-    		if (PARSE_ONE_WORD_CMD(commandLineBuffer, cmdPrompt)) {
+    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdPrompt)) {
     			responseId = RESPONSE_MSG_PROMPT;
     		}
     		break;
@@ -199,7 +190,7 @@ ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buf
 
 	switch (first[0]) {
 	case 'k':
-		if (LastWordMatch(first, fieldKey)) {
+		if (ParseCmdWord(first, fieldKey)) {
 			/*
 			 * At this point, we have validated the request to store a new key. Next we need to poll
 			 * until we get the entire key. Key length can be 0 up to max length bytes.
@@ -241,7 +232,7 @@ ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buf
 		break;
 
 	case 's':
-		if (LastWordMatch(first, fieldStatus)) {
+		if (ParseCmdWord(first, fieldStatus)) {
 			responseId = RESPONSE_MSG_AWS_STATUS;
 		}
 		break;
@@ -366,25 +357,25 @@ ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Bu
 
 	switch (first[0]) {
 	case 'o':
-		if (LastWordMatch(first, fieldOff)) {
+		if (ParseCmdWord(first, fieldOff)) {
 			responseId = RESPONSE_MSG_WIFI_STATUS;
 		}
-		else if (LastWordMatch(first, fieldOn)) {
+		else if (ParseCmdWord(first, fieldOn)) {
 			responseId = RESPONSE_MSG_WIFI_STATUS;
 		}
 		break;
 
 	case 'p':
-		if (NextWordMatch(first, fieldPassword)) {
+		if (ParseCmdWord(first, fieldPassword)) {
 			responseId = RESPONSE_MSG_WIFI_STATUS;
 		}
 		break;
 
 	case 's':
-		if (NextWordMatch(first, fieldSsid)) {
+		if (ParseCmdWord(first, fieldSsid)) {
 			responseId = RESPONSE_MSG_WIFI_STATUS;
 		}
-		else if (LastWordMatch(first, fieldStatus)) {
+		else if (ParseCmdWord(first, fieldStatus)) {
 			responseId = RESPONSE_MSG_WIFI_STATUS;
 		}
 		break;
@@ -467,18 +458,9 @@ bufIter validateBuffer(bufIter first, bufIter last)
 	bufIter lineEditEnd;
 
 	/* Find null terminator, end of command string */
-	lineEditEnd = std::find(first, last, 0);
-	if (lineEditEnd == last) return first; /* invalid contents, missing null terminator */
-	lineEditEnd++; /* next location after null, same as STL end() */
-
-	/* All words need to have a trailing white space, including the last word.
-	 * Swap the newline character with a space to guarantee a trailing white space exists.
-	 *
-	 * Bound the update within the range: first to last
-	 */
-	if ((lineEditEnd - 2) > first) {
-		*(lineEditEnd - 2) = ' ';
-	}
+	lineEditEnd = std::find(first, last, '\0');
+	if (lineEditEnd == last) return first; /* invalid contents, missing terminator */
+	lineEditEnd++; /* next location after terminator, same as STL end() */
 
 	/* Remove duplicate white space(s) */
 	lineEditEnd = std::unique(first, lineEditEnd,
@@ -487,6 +469,16 @@ bufIter validateBuffer(bufIter first, bufIter last)
 	/* Remove leading white space */
 	if (first[0] == ' ') {
     	lineEditEnd = std::move(first + 1, lineEditEnd, first);
+	}
+
+	/* Remove trailing white space */
+	if ((lineEditEnd - 3) > first) {
+		/* Not empty, check for trailing white space */
+    	if (*(lineEditEnd - 3) == ' ') {
+    		*(lineEditEnd - 3) = '\n';
+    		*(lineEditEnd - 2) = '\0';
+    		--lineEditEnd;
+    	}
 	}
 
 	return lineEditEnd;

@@ -244,11 +244,11 @@ TEST(validateBuffer, LeadingWhiteSpace) {
 
 	std::strncpy(testBuffer.data(), " Hello\n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[7], validateBuffer(testBuffer.begin(), testBuffer.end()));
-	ASSERT_STREQ("Hello ", testBuffer.data());
+	ASSERT_STREQ("Hello\n", testBuffer.data());
 
 	std::strncpy(testBuffer.data(), "   Hello\n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[7], validateBuffer(testBuffer.begin(), testBuffer.end()));
-	ASSERT_STREQ("Hello ", testBuffer.data());
+	ASSERT_STREQ("Hello\n", testBuffer.data());
 }
 
 
@@ -258,11 +258,11 @@ TEST(validateBuffer, TrailingWhiteSpace) {
 
 	std::strncpy(testBuffer.data(), "Hello \n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[7], validateBuffer(testBuffer.begin(), testBuffer.end()));
-	ASSERT_STREQ("Hello ", testBuffer.data());
+	ASSERT_STREQ("Hello\n", testBuffer.data());
 
 	std::strncpy(testBuffer.data(), "Hello   \n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[7], validateBuffer(testBuffer.begin(), testBuffer.end()));
-	ASSERT_STREQ("Hello ", testBuffer.data());
+	ASSERT_STREQ("Hello\n", testBuffer.data());
 }
 
 TEST(validateBuffer, MiddleWhiteSpace) {
@@ -271,11 +271,11 @@ TEST(validateBuffer, MiddleWhiteSpace) {
 
 	std::strncpy(testBuffer.data(), " Hello  World \n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[13], validateBuffer(testBuffer.begin(), testBuffer.end()));
-	ASSERT_STREQ("Hello World ", testBuffer.data());
+	ASSERT_STREQ("Hello World\n", testBuffer.data());
 
 	std::strncpy(testBuffer.data(), "Hello   World\n", testBuffer.size());
 	EXPECT_EQ(&testBuffer[13], validateBuffer(testBuffer.begin(), testBuffer.end()));
-	ASSERT_STREQ("Hello World ", testBuffer.data());
+	ASSERT_STREQ("Hello World\n", testBuffer.data());
 }
 
 
