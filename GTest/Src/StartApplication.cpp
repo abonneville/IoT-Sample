@@ -51,8 +51,6 @@ static char commandLineBuffer[128] = {};
 static uint8_t bigTest[BUFSIZ * 3];
 static uint8_t bigData[BUFSIZ * 3];
 
-//static ResponseInterface rspThread;
-//static CommandInterface cmdThread = CommandInterface(rspThread);
 
 class GTestThread : public cpp_freertos::Thread {
 

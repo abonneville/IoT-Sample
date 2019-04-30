@@ -21,6 +21,7 @@
  */
 
 #include <StartApplication.hpp>
+#include "UserConfig.hpp"
 #include "CommandInterface.hpp"
 #include "ResponseInterface.hpp"
 
@@ -32,8 +33,14 @@
 /* Macro -------------------------------------------------------------*/
 
 /* Variables ---------------------------------------------------------*/
-static ResponseInterface rspThread;
-static CommandInterface cmdThread = CommandInterface(rspThread);
+UserConfig userConfig;
+
+constexpr static UBaseType_t itemSize = sizeof(ResponseId_t);
+constexpr static UBaseType_t maxItems = 5;
+static cpp_freertos::Queue msgQueue(maxItems, itemSize, "msgQueue");
+
+static ResponseInterface rspThread(msgQueue);
+static CommandInterface cmdThread(msgQueue);
 
 /* Function prototypes -----------------------------------------------*/
 

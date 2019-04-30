@@ -38,33 +38,18 @@ static void WifiStatusHandler(void);
  * @brief Creates a thread and a message queue to handle requests to generate response
  * messages.
  */
-ResponseInterface::ResponseInterface()
-       : Thread("ResponseInterface", STACK_SIZE_RESPONSE, THREAD_PRIORITY_NORMAL)
+ResponseInterface::ResponseInterface(cpp_freertos::Queue &h)
+       : Thread("ResponseInterface", STACK_SIZE_RESPONSE, THREAD_PRIORITY_NORMAL),
+		 msgHandle(h)
 {
-	constexpr static UBaseType_t itemSize = sizeof(ResponseId_t);
-	constexpr static UBaseType_t maxItems = 5;
-	msgQueue = new Queue(maxItems, itemSize, "msgQueue");
-
 	Start();
 }
 
 ResponseInterface::~ResponseInterface()
 {
-	delete msgQueue;
+
 }
 
-/**
- *  Add a response item to the back of the queue.
- *
- *  @param responseId is the response item you are adding.
- *  @param Timeout is how long to wait to add the item to the queue if
- *         the queue is currently full.
- *  @return true if the item was added, false if it was not.
- */
-bool ResponseInterface::putResponse(ResponseId_t responseId, TickType_t Timeout)
-{
-	return msgQueue->Enqueue(&responseId, Timeout);
-}
 
 /**
  * @brief Implements the persistent loop for thread execution.
@@ -80,7 +65,7 @@ void ResponseInterface::Run()
 	while (true) {
 
 		/* Wait until a request is made to generate a response message */
-		msgQueue->Dequeue(&msgId);
+		msgHandle.Dequeue(&msgId);
 
 		switch (msgId) {
 		case RESPONSE_MSG_AWS_STATUS:

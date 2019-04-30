@@ -29,7 +29,6 @@
 #include "device.h"
 
 #include "CommandInterface.hpp"
-#include "ResponseInterface.hpp"
 #include "UserConfig.hpp"
 
 
@@ -46,7 +45,7 @@
 
 
 /* Private variables ---------------------------------------------------------*/
-UserConfig userConfig;
+extern class UserConfig userConfig;
 
 static constexpr char cmdPrompt[] = "\n";
 static constexpr char cmdAws[] = "aws ";
@@ -71,9 +70,9 @@ static constexpr char fieldStatus[] = "status ";
  * the thread. If the scheduler is already running, then then thread will begin
  * @param handle identifies which ResponseInterface will handle command response messaging
  */
-CommandInterface::CommandInterface(ResponseInterface &handle)
+CommandInterface::CommandInterface(cpp_freertos::Queue &h)
 	: Thread("CommandInterface", STACK_SIZE_COMMANDS, THREAD_PRIORITY_ABOVE_NORMAL),
-	  responseHandle(handle)
+	  msgHandle(h)
 {
 	Start();
 
@@ -164,7 +163,7 @@ void CommandInterface::Run()
 
 
     	/* Request response message be sent to host */
-		responseHandle.putResponse(responseId, (TickType_t)10);
+		msgHandle.Enqueue(&responseId, (TickType_t)10 );
 
 
     	// Log any and all error states for future report back to host

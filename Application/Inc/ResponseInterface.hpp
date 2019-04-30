@@ -48,15 +48,14 @@ typedef enum {
 class ResponseInterface : public cpp_freertos::Thread
 {
 	public:
-		ResponseInterface();
+		ResponseInterface(cpp_freertos::Queue &h);
 		~ResponseInterface();
-		bool putResponse(ResponseId_t responseId, TickType_t Timeout = portMAX_DELAY);
 
 	protected:
 		void Run();
 
 	private:
-		cpp_freertos::Queue *msgQueue;
+		cpp_freertos::Queue &msgHandle;
 };
 
 

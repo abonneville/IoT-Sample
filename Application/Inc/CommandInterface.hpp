@@ -25,6 +25,7 @@
 
 #include <array>
 #include "thread.hpp"
+#include "queue.hpp"
 #include "ResponseInterface.hpp"
 
 
@@ -38,7 +39,7 @@ class CommandInterface : public cpp_freertos::Thread
     public:
 		typedef std::array<char, 128> Buffer_t;
 
-		CommandInterface(ResponseInterface &handle);
+		CommandInterface(cpp_freertos::Queue &h);
 
 		ResponseId_t AwsCmdHandler(Buffer_t::const_iterator, Buffer_t::const_iterator);
 		ResponseId_t ResetCmdHandler();
@@ -50,7 +51,7 @@ class CommandInterface : public cpp_freertos::Thread
 
     private:
         Buffer_t commandLineBuffer;
-        ResponseInterface &responseHandle;
+		cpp_freertos::Queue &msgHandle;
 };
 
 
