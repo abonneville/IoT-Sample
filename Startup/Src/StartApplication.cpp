@@ -33,14 +33,21 @@
 /* Macro -------------------------------------------------------------*/
 
 /* Variables ---------------------------------------------------------*/
-UserConfig userConfig;
+
+/*
+ * All thread objects are being instantiated and linked via handle here, to avoid undefined
+ * initialization if they were instantiated in different translation units (files). As this
+ * project grows, this approach may have to change and use a singleton and/or factory design
+ * pattern for distributing initialized object handles.
+ */
+static UserConfig userConfig;
 
 constexpr static UBaseType_t itemSize = sizeof(ResponseId_t);
 constexpr static UBaseType_t maxItems = 5;
 static cpp_freertos::Queue msgQueue(maxItems, itemSize, "msgQueue");
 
 static ResponseInterface rspThread(msgQueue);
-static CommandInterface cmdThread(msgQueue);
+static CommandInterface cmdThread(msgQueue, userConfig);
 
 /* Function prototypes -----------------------------------------------*/
 

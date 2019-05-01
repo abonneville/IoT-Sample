@@ -28,8 +28,9 @@
 
 #include "device.h"
 
-#include "CommandInterface.hpp"
 #include "UserConfig.hpp"
+#include "CommandInterface.hpp"
+
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,9 +67,10 @@ static constexpr char fieldStatus[] = "status\n";
  * the thread. If the scheduler is already running, then then thread will begin
  * @param handle identifies which ResponseInterface will handle command response messaging
  */
-CommandInterface::CommandInterface(cpp_freertos::Queue &h)
+CommandInterface::CommandInterface(cpp_freertos::Queue &mh, UserConfig &uh)
 	: Thread("CommandInterface", STACK_SIZE_COMMANDS, THREAD_PRIORITY_ABOVE_NORMAL),
-	  msgHandle(h)
+	  msgHandle(mh),
+	  userConfigHandle(uh)
 {
 	Start();
 
@@ -224,7 +226,7 @@ ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buf
 			}
 
 			if (keySize > 0) {
-				if (userConfig.SetAwsKey(std::move(newKey), keySize) == true) {
+				if (userConfigHandle.SetAwsKey(std::move(newKey), keySize) == true) {
 					responseId = RESPONSE_MSG_PROMPT;
 				}
 			}

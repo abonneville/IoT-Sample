@@ -28,6 +28,7 @@
 #include "queue.hpp"
 #include "ResponseInterface.hpp"
 
+class UserConfig;
 
 /**
  * @brief Implements a persistent thread responsible for; command reception, parsing, and
@@ -39,7 +40,7 @@ class CommandInterface : public cpp_freertos::Thread
     public:
 		typedef std::array<char, 128> Buffer_t;
 
-		CommandInterface(cpp_freertos::Queue &h);
+		CommandInterface(cpp_freertos::Queue &, UserConfig &);
 
 		ResponseId_t AwsCmdHandler(Buffer_t::const_iterator, Buffer_t::const_iterator);
 		ResponseId_t ResetCmdHandler();
@@ -52,6 +53,7 @@ class CommandInterface : public cpp_freertos::Thread
     private:
         Buffer_t commandLineBuffer;
 		cpp_freertos::Queue &msgHandle;
+		UserConfig &userConfigHandle;
 };
 
 
