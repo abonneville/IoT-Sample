@@ -39,25 +39,26 @@
 
 /* Private macro ---------- ---------------------------------------------------*/
 #define ParseCmdWord(strInter, cmd) 	std::equal(strInter, strInter + sizeof(cmd) - 1, cmd)
+#define ParseCmdWordEnd(strInter, cmd) 	std::equal(strInter, strInter + sizeof(cmd)    , cmd)
 
 
 /* Private variables ---------------------------------------------------------*/
 extern class UserConfig userConfig;
 
-static constexpr char cmdPrompt[] = "\n";
+static constexpr char cmdPrompt[] = "";
 static constexpr char cmdAws[] = "aws ";
-static constexpr char cmdHelp[] = "help\n";
-static constexpr char cmdReset[] = "reset\n";
-static constexpr char cmdStatus[] = "status\n";
+static constexpr char cmdHelp[] = "help";
+static constexpr char cmdReset[] = "reset";
+static constexpr char cmdStatus[] = "status";
 static constexpr char cmdWifi[] = "wifi ";
-static constexpr char cmdVersion[] = "version\n";
+static constexpr char cmdVersion[] = "version";
 
-static constexpr char fieldKey[] = "key\n";
-static constexpr char fieldOff[] = "off\n";
-static constexpr char fieldOn[] = "on\n";
+static constexpr char fieldKey[] = "key";
+static constexpr char fieldOff[] = "off";
+static constexpr char fieldOn[] = "on";
 static constexpr char fieldPassword[] = "password ";
 static constexpr char fieldSsid[] = "ssid ";
-static constexpr char fieldStatus[] = "status\n";
+static constexpr char fieldStatus[] = "status";
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -96,7 +97,7 @@ void CommandInterface::Run()
     	std::fgets(commandLineBuffer.begin(), commandLineBuffer.size(), stdin);
 
     	/* Validate buffer formatting */
-    	lineEnd = validateBuffer(commandLineBuffer.begin(), commandLineBuffer.end());
+    	lineEnd = cleanLineBuffer(commandLineBuffer.begin(), commandLineBuffer.end());
     	if (lineEnd == commandLineBuffer.begin()) {
     		/* Discard, buffer contents were invalid */
     		continue;
@@ -114,25 +115,25 @@ void CommandInterface::Run()
     		break;
 
     	case 'h':
-    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdHelp)) {
+    		if (ParseCmdWordEnd(commandLineBuffer.cbegin(), cmdHelp)) {
     			responseId = RESPONSE_MSG_HELP;
     		}
     		break;
 
     	case 'r':
-    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdReset)) {
+    		if (ParseCmdWordEnd(commandLineBuffer.cbegin(), cmdReset)) {
     			responseId = ResetCmdHandler();
     		}
     		break;
 
     	case 's':
-    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdStatus)) {
+    		if (ParseCmdWordEnd(commandLineBuffer.cbegin(), cmdStatus)) {
     			responseId = RESPONSE_MSG_STATUS;
     		}
     		break;
 
     	case 'v':
-    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdVersion)) {
+    		if (ParseCmdWordEnd(commandLineBuffer.cbegin(), cmdVersion)) {
     			responseId = RESPONSE_MSG_VERSION;
     		}
     		break;
@@ -143,8 +144,8 @@ void CommandInterface::Run()
     		}
     		break;
 
-    	case '\n':
-    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdPrompt)) {
+    	case '\0':
+    		if (ParseCmdWordEnd(commandLineBuffer.cbegin(), cmdPrompt)) {
     			responseId = RESPONSE_MSG_PROMPT;
     		}
     		break;
@@ -192,7 +193,7 @@ ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buf
 
 	switch (first[0]) {
 	case 'k':
-		if (ParseCmdWord(first, fieldKey)) {
+		if (ParseCmdWordEnd(first, fieldKey)) {
 			/*
 			 * At this point, we have validated the request to store a new key. Next we need to poll
 			 * until we get the entire key. Key length can be 0 up to max length bytes.
@@ -214,7 +215,7 @@ ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buf
 				}
 
 				if ( (keySize + lineSize) <= sizeof(UserConfig::Key_t) ) {
-					std::memcpy(newKey->data() + keySize, commandLineBuffer.cbegin(), lineSize);
+					std::memcpy(newKey->value.data() + keySize, commandLineBuffer.cbegin(), lineSize);
 					keySize += lineSize;
 				}
 				else {
@@ -226,7 +227,8 @@ ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buf
 			}
 
 			if (keySize > 0) {
-				if (userConfigHandle.SetAwsKey(std::move(newKey), keySize) == true) {
+				newKey->size = keySize;
+				if (userConfigHandle.SetAwsKey(std::move(newKey)) == true) {
 					responseId = RESPONSE_MSG_PROMPT;
 				}
 			}
@@ -234,7 +236,7 @@ ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buf
 		break;
 
 	case 's':
-		if (ParseCmdWord(first, fieldStatus)) {
+		if (ParseCmdWordEnd(first, fieldStatus)) {
 			responseId = RESPONSE_MSG_AWS_STATUS;
 		}
 		break;
@@ -359,25 +361,55 @@ ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Bu
 
 	switch (first[0]) {
 	case 'o':
-		if (ParseCmdWord(first, fieldOff)) {
-			responseId = RESPONSE_MSG_WIFI_STATUS;
+		if (ParseCmdWordEnd(first, fieldOff)) {
+			if (userConfigHandle.SetWifiOn(false) == true) {
+				responseId = RESPONSE_MSG_PROMPT;
+			}
 		}
-		else if (ParseCmdWord(first, fieldOn)) {
-			responseId = RESPONSE_MSG_WIFI_STATUS;
+		else if (ParseCmdWordEnd(first, fieldOn)) {
+			if (userConfigHandle.SetWifiOn(true) == true) {
+				responseId = RESPONSE_MSG_PROMPT;
+			}
 		}
 		break;
 
 	case 'p':
 		if (ParseCmdWord(first, fieldPassword)) {
-			responseId = RESPONSE_MSG_WIFI_STATUS;
+			/* Validate new password */
+			UserConfig::Password_t *pwdBegin = (UserConfig::Password_t *)(first + sizeof(fieldPassword) - 1);
+			UserConfig::Password_t *pwdEnd = (UserConfig::Password_t *)(last - 1);
+			size_t pwdSize = (size_t)pwdEnd - (size_t)pwdBegin;
+
+			if (pwdSize > sizeof(UserConfig::Password_t)) {
+				/* Discard, password is to large */
+				break;
+			}
+
+			/* Save new password */
+			if (userConfigHandle.SetWifiPassword(pwdBegin) == true) {
+				responseId = RESPONSE_MSG_PROMPT;
+			}
 		}
 		break;
 
 	case 's':
 		if (ParseCmdWord(first, fieldSsid)) {
-			responseId = RESPONSE_MSG_WIFI_STATUS;
+			/* Validate new ssid */
+			UserConfig::Ssid_t *ssidBegin = (UserConfig::Ssid_t *)(first + sizeof(fieldSsid) - 1);
+			UserConfig::Ssid_t *ssidEnd = (UserConfig::Ssid_t *)(last - 1);
+			size_t size = (size_t)ssidEnd - (size_t)ssidBegin;
+
+			if (size > sizeof(UserConfig::Ssid_t)) {
+				/* Discard, SSID is to large */
+				break;
+			}
+
+			/* Save new SSID */
+			if (userConfigHandle.SetWifiSsid(ssidBegin) == true) {
+				responseId = RESPONSE_MSG_PROMPT;
+			}
 		}
-		else if (ParseCmdWord(first, fieldStatus)) {
+		else if (ParseCmdWordEnd(first, fieldStatus)) {
 			responseId = RESPONSE_MSG_WIFI_STATUS;
 		}
 		break;
@@ -434,7 +466,7 @@ bufIter cleanLineBuffer(bufIter first, bufIter last)
 	}
 
 	/* Remove trailing white space */
-	if (first[0] != 0) {
+	if ((lineEditEnd - 2) > first) {
 		/* Not empty, check for trailing white space */
     	if (*(lineEditEnd - 2) == ' ') {
     		*(lineEditEnd - 2) = *(lineEditEnd - 1);

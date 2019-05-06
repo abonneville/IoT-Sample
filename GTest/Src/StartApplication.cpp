@@ -31,7 +31,8 @@
 #include "syscalls.h"
 #include "device.h"
 
-#include <StartApplication.hpp>
+#include "StartApplication.hpp"
+#include "UserConfig.hpp"
 #include "CommandInterface.hpp"
 #include "ResponseInterface.hpp"
 
@@ -113,7 +114,8 @@ class calloc : public BaseTest {};
 class fopen : public BaseTest {};
 class fwrite : public BaseTest {};
 class fread : public BaseTest {};
-class crc : public BaseTest{};
+class crc : public BaseTest {};
+class uConfig : public BaseTest {};
 
 
 /* Function prototypes -----------------------------------------------*/
@@ -146,7 +148,7 @@ void StartApplication(void)
 }
 
 
-#if 1
+#if 0
 TEST(cleanLineBuffer, EmptyBuffer) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
@@ -894,6 +896,8 @@ TEST_F(fread, ToLarge)
 }
 
 
+
+
 /***************************************************************************************/
 TEST_F(crc, Verification)
 {
@@ -901,4 +905,81 @@ TEST_F(crc, Verification)
 
 	EXPECT_EQ(crc_mpeg2(test, &test[9]), 0x0376E6E7u);
 }
+
+
+
+TEST_F(uConfig, Invalid)
+{
+	/* Initialize storage with invalid values */
+	std::unique_ptr<UserConfig::Config_t> testValue = std::make_unique<UserConfig::Config_t>();
+	std::memset(testValue.get(), 0x5A, UserConfig::TableSize);
+
+	FILE *handle = std::fopen(Device.storage, "wb");
+	EXPECT_EQ(std::fwrite(testValue.get(), UserConfig::TableSize, 1, handle), 1u);
+	EXPECT_EQ(std::fflush(handle), 0);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+
+	/* Validate interface initializes to known state */
+	UserConfig testConfig; /* Object instantiation emulates a power-on event */
+	const UserConfig::Aws_t &aws = testConfig.GetAwsConfig();
+	const UserConfig::Wifi_t &wifi = testConfig.GetWifiConfig();
+
+	std::memset(bigTest, 0x00, UserConfig::TableSize);
+	EXPECT_EQ(std::memcmp(bigTest, &aws, sizeof(UserConfig::Aws_t)), 0);
+	EXPECT_EQ(std::memcmp(bigTest, &wifi, sizeof(UserConfig::Wifi_t)), 0);
+}
+
+
+TEST_F(uConfig, SetValues)
+{
+	/**
+	 * Normally the objects would be defined at compile time, but for test purposes runtime
+	 * instantiation will be used. Runtime instantiation will emulate a power-on event.
+	 */
+
+	/* Initialize storage to a known state, invalid values. This forces the interface to set safe
+	 * defaults that we will later change.
+	 */
+	std::unique_ptr<UserConfig::Config_t> testValue = std::make_unique<UserConfig::Config_t>();
+	std::memset(testValue.get(), 0x5A, UserConfig::TableSize);
+
+	FILE *handle = std::fopen(Device.storage, "wb");
+	EXPECT_EQ(std::fwrite(testValue.get(), UserConfig::TableSize, 1, handle), 1u);
+	EXPECT_EQ(std::fflush(handle), 0);
+	EXPECT_EQ(std::ferror(handle), 0);
+	EXPECT_EQ(std::fclose(handle), 0);
+	EXPECT_EQ(errno, 0);
+	testValue.release();
+
+	/* Create test values */
+	std::unique_ptr<UserConfig::Key_t> testKey = std::make_unique<UserConfig::Key_t>();
+	constexpr UserConfig::KeyValue_t MyKey = {"MyKeyIsThis"};
+	testKey->value = MyKey;
+	testKey->size = sizeof(MyKey);
+	constexpr UserConfig::Password_t testPassword = {"MyPassword123*"};
+	constexpr UserConfig::Ssid_t testSsid = {"CoolThingsSSID"};
+
+	/* Set parameters to a new value */
+	{
+		std::unique_ptr<UserConfig> testConfig = std::make_unique<UserConfig>();
+		EXPECT_EQ(testConfig->SetWifiOn(true), true);
+		EXPECT_EQ(testConfig->SetWifiPassword( &testPassword ), true);
+		EXPECT_EQ(testConfig->SetWifiSsid(  &testSsid ), true);
+		EXPECT_EQ(testConfig->SetAwsKey( std::move(testKey) ), true);
+		testConfig.release();
+	}
+	{
+		std::unique_ptr<UserConfig> testConfig = std::make_unique<UserConfig>();
+		const UserConfig::Wifi_t &wifi = testConfig->GetWifiConfig();
+		EXPECT_EQ(wifi.isWifiOn, true);
+		ASSERT_STREQ( wifi.password.data(), testPassword.data() );
+		ASSERT_STREQ( wifi.ssid.data(), testSsid.data() );
+		testConfig.release();
+	}
+
+}
+
+
 #endif

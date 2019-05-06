@@ -12,8 +12,10 @@
 
 #include "ticks.hpp"
 #include "version.hpp"
-#include "ResponseInterface.hpp"
 #include "stm32l4xx_hal.h"
+
+#include "UserConfig.hpp"
+#include "ResponseInterface.hpp"
 
 using namespace cpp_freertos;
 using namespace std;
@@ -26,21 +28,20 @@ using namespace std;
 
 /* Private variables ---------------------------------------------------------*/
 
-static void AwsStatusHandler(void);
 static void HelpHandler(void);
 static void InvalidHandler(void);
 static void PromptHandler(void);
 static void StatusHandler(void);
 static void VersionHandler(void);
-static void WifiStatusHandler(void);
 
 /**
  * @brief Creates a thread and a message queue to handle requests to generate response
  * messages.
  */
-ResponseInterface::ResponseInterface(cpp_freertos::Queue &h)
+ResponseInterface::ResponseInterface(cpp_freertos::Queue &mh, UserConfig &uh)
        : Thread("ResponseInterface", STACK_SIZE_RESPONSE, THREAD_PRIORITY_NORMAL),
-		 msgHandle(h)
+		  msgHandle(mh),
+		  userConfigHandle(uh)
 {
 	Start();
 }
@@ -108,9 +109,12 @@ void ResponseInterface::Run()
 /**
  * @brief Reports the status for the AWS connection.
  */
-static void AwsStatusHandler(void)
+void ResponseInterface::AwsStatusHandler(void)
 {
-	std::printf("AWS - not implemented.\n");
+	const UserConfig::Aws_t &aws = userConfigHandle.GetAwsConfig();
+
+	std::printf("-- AWS Status --\n");
+	std::printf("Key size: %u\n", aws.key.size);
 	std::fflush(stdout);
 }
 
@@ -192,9 +196,14 @@ static void VersionHandler(void)
 /**
  * @brief	Reports status of the WiFi connection.
  */
-static void WifiStatusHandler(void)
+void ResponseInterface::WifiStatusHandler()
 {
-	std::printf("Wifi - not implemented.\n");
+	const UserConfig::Wifi_t &wifi = userConfigHandle.GetWifiConfig();
+
+	std::printf("-- WiFi Status --\n");
+	std::printf("SSID: %s\n", wifi.ssid.data() );
+	std::printf("Password: %s\n", wifi.password.data() );
+	std::printf("Radio is %s.\n", ( wifi.isWifiOn == true ? "ON" : "OFF") );
 	std::fflush(stdout);
 }
 

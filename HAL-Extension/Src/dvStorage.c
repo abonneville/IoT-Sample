@@ -80,11 +80,6 @@ int storage_open_r(struct _reent *ptr, int fd, int flags, int mode)
  */
 int storage_close_r(struct _reent *ptr, int fd)
 {
-	/* After writing data, re-compute and set new checksum and file size */
-	if (accessMode != 0) {
-
-	}
-
 	return 0;
 }
 
@@ -143,8 +138,6 @@ _ssize_t storage_read_r (struct _reent *ptr, int fd, void *buf, size_t len)
 	size_t count = 0;
 	uint8_t *lhs = (uint8_t *)buf;
 	const uint8_t *rhs = (uint8_t *)(FLASH_USER_START_ADDR + positionIndicator);
-
-	/* Validate data */
 
 	/* Read data into buffer */
 	while (( rhs < (uint8_t *)FLASH_USER_END_ADDR) &&
@@ -230,83 +223,6 @@ static _ssize_t WriteAllStorage(const void *buf, size_t len)
 }
 
 
-#if 0
-/**
- * @brief  Write buffer contents until memory is full or buffer is emptied.
- * @param  buf: pointer to first character to be written
- * @parm   len: how many characters to be written
- * @retval How many characters written into memory.
- */
-static _ssize_t WriteStorage(const uint8_t *buf, size_t len)
-{
-	HAL_StatusTypeDef status = HAL_ERROR;
-	uint32_t Address = FLASH_USER_START_ADDR + positionIndicator;
-	uint64_t *data = (uint64_t *)buf;
-	size_t count = 0;
-	size_t offset = 0;
-
-	uint8_t shadowBuffer[8];
-
-
-	/*
-	 * On-chip flash requires flash updates to occur on an 8-byte boundary.
-	 *
-	 * This algorithm allows writes to resume even after previously writing an odd number of bytes.
-	 * All updates to flash occur on an 8-byte boundary, and no garbage values are ever written to
-	 * memory.
-	 */
-
-	while (( Address < FLASH_USER_END_ADDR) &&
-			(count < len)) {
-
-
-		/*
-		 * Starting address is not on 8-byte boundary, force alignment and initialize shadow with
-		 * existing flash contents (preserve existing data value(s))
-		 */
-		if (Address & 0x7) {
-			offset = (Address & 0x7u);
-			Address = Address & ~0x7u;
-
-			/* Copy existing flash contents into shadow*/
-			memcpy(shadowBuffer , (void *)Address, 8);
-		}
-
-		/*
-		 * Final write is not 8-bytes in length, pad with existing flash contents (erased state).
-		 */
-		if (len - count < 8) {
-			memcpy(shadowBuffer , (void *)Address, 8);
-		}
-
-
-		/* Insert new value(s) into shadow buffer*/
-		do {
-			shadowBuffer[offset] = buf[count];
-			offset++;
-			count++;
-		} while ( (offset < 8) &&
-				  (count < len) );
-
-
-		data = (uint64_t *)shadowBuffer;
-		status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, Address, *data);
-		if (status != HAL_OK) {
-			count = 0;
-			break;
-		}
-
-		Address += offset;
-		offset = 0;
-	}
-
-	positionIndicator += count;
-
-	return (count < len ? count : len);
-}
-#endif
-
-
 
 /**
   * @brief  Gets the page of a given address
@@ -369,6 +285,18 @@ static uint32_t GetBank(uint32_t Addr)
 }
 
 
+/**
+ * @brief  Calculates a 32-bit CRC over a variable length message.
+ * @note   Algorithm adapted from Christopher Kormanyos book, "Real-Time C++"
+ * @first  Starting location for calculating checksum
+ * @last   Location to stop calculating checksum, location is not part of the CRC result
+ * @retval the 32-bit CRC value
+ *
+ * Name: CRC-32/MPEG-2
+ * Polynomial: 0x04C1 1DB7
+ * Initial Value: 0xFFFF FFFF
+ * Test input '1'...'9' : result 0x0376 E6E7
+ */
 const uint32_t table[16] = {
 		0x00000000, 0x04C11DB7,
 		0x09823B6E, 0x0D4326D9,

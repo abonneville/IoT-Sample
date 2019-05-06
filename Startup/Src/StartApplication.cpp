@@ -46,7 +46,7 @@ constexpr static UBaseType_t itemSize = sizeof(ResponseId_t);
 constexpr static UBaseType_t maxItems = 5;
 static cpp_freertos::Queue msgQueue(maxItems, itemSize, "msgQueue");
 
-static ResponseInterface rspThread(msgQueue);
+static ResponseInterface rspThread(msgQueue, userConfig);
 static CommandInterface cmdThread(msgQueue, userConfig);
 
 /* Function prototypes -----------------------------------------------*/

@@ -20,6 +20,17 @@
  *
  */
 
+
+/**
+ * Overview:
+ *  - Overall design supports multiple consumers and a single producer of configuration data
+ *  - When setting new values, only the "stored" value is updated
+ *  - When getting configuration data, a read-only copy is accessed. This copy is updated one-time
+ *  during system initialization.
+ *  - As designed, separate data spaces exist for consumers and producers. System is reentrant
+ *  so long as the above limitations are observed.
+ */
+
 #include <cstdio>
 #include <cstring>
 
@@ -40,42 +51,45 @@
 /* External functions ------------------------------------------------*/
 
 
+
 /**
- * @brief Reads configuration parameters from storage, if invalid, initializes to known
- * state.
+ * @brief Reads one full object worth of configuration parameters from storage, if invalid,
+ * initializes to known state.
+ * @param dest Is the location to load configuration data into
  */
-void UserConfig::GetConfig()
+void UserConfig::GetConfig(Config_t *dest)
 {
 	FILE *handle = std::fopen(Device.storage, "rb");
-	size_t status = std::fread(&config, sizeof(Config_t), 1, handle);
+	size_t status = std::fread(dest, sizeof(Config_t), 1, handle);
 
 	/* Validate, when invalid initialize */
 	if    ( (handle == nullptr)
 		 || (std::ferror(handle) == 1 )
 		 || (status == 0)
-		 || (config.tableSize != TableSize)
-		 || (config.tableVersion > TableVersion)
+		 || (dest->tableSize != TableSize)
+		 || (dest->tableVersion > TableVersion)
 		 ) {
-		std::memset(&config, 0, sizeof(Config_t));
-		config.tableVersion = TableVersion;
-		config.tableSize = TableSize;
+		std::memset(dest, 0, sizeof(Config_t));
+		dest->tableVersion = TableVersion;
+		dest->tableSize = TableSize;
 	}
 
 	std::fclose(handle);
 }
 
 /**
- * @brief Writes configuration parameters to storage.
+ * @brief Writes one full object worth of configuration parameters into storage.
+ * @param  source Is the location to write configuration data from
  * @retval On success, true is returned. On error, false is returned.
  */
-bool UserConfig::SetConfig()
+bool UserConfig::SetConfig(std::unique_ptr<Config_t> source)
 {
 	_ssize_t status = 1;
 
 	FILE *handle = std::fopen(Device.storage, "wb");
 
  	if (handle != nullptr) {
-		std::fwrite(&config, sizeof(Config_t), 1, handle);
+		std::fwrite(source.get(), sizeof(Config_t), 1, handle);
 		std::fflush(handle);
 	 	status = std::ferror(handle);
 	 	std::fclose(handle);
@@ -85,31 +99,24 @@ bool UserConfig::SetConfig()
 }
 
 
-bool UserConfig::GetAwsConfig(const Aws_t &)
-{
-	cpp_freertos::LockGuard guard(AwsConfigGuard);
 
-	return true;
+/**
+ * @brief  Retrieves the current AWS settings
+ * @param  dest Is the location to load the requested setting(s)
+ */
+const UserConfig::Aws_t & UserConfig::GetAwsConfig() const
+{
+	return config.aws;
 }
 
 
-void UserConfig::ReleaseAwsConfig()
+/**
+ * @brief  Retrieves the current WiFi settings
+ * @param  dest Is the location to load the requested setting(s)
+ */
+const UserConfig::Wifi_t & UserConfig::GetWifiConfig() const
 {
-
-}
-
-
-bool UserConfig::GetWifiConfig(const Wifi_t &)
-{
-	cpp_freertos::LockGuard guard(WifiConfigGuardLock);
-
-	return true;
-}
-
-
-void UserConfig::RelaseWifiConfig()
-{
-
+	return config.wifi;
 }
 
 
@@ -117,55 +124,60 @@ void UserConfig::RelaseWifiConfig()
 /**
  * @brief  Stores a new AWS key
  * @param  newKey Is the value to be saved
- * @retval On success, true is returned. On error, false is returned, and original value is retained.
+ * @retval On success, true is returned. On error, false is returned.
  */
-bool UserConfig::SetAwsKey(std::unique_ptr<Key_t> newKey, uint16_t size)
+bool UserConfig::SetAwsKey(std::unique_ptr<Key_t> newKey)
 {
-	std::unique_ptr<Key_t> backup = std::make_unique<Key_t>();
+	std::unique_ptr<Config_t> modify = std::make_unique<Config_t>();
 
-	/* When updating storage it can take 20+ mS to complete, so we do not want to block scheduling.
-	 * Instead, utilize a semaphore to lock/unlock access when data is being adjusted.
-	 */
-	bool status = false;
-
-	if (AwsConfigGuard.Lock(pdMS_TO_TICKS(100)) == true) {
-
-		*backup = config.aws.key;
-		config.aws.key = *newKey;
-
-		status = SetConfig();
-		if (status == false) {
-			config.aws.key = *backup;
-		}
-
-		AwsConfigGuard.Unlock();
-	}
-
-
-	return status;
+	GetConfig( modify.get() );
+	modify->aws.key.value = newKey->value;
+	modify->aws.key.size = newKey->size;
+	return SetConfig( std::move(modify) );
 }
 
 
-bool UserConfig::SetWifiOn(bool )
+/**
+ * @brief  Stores a new WiFi radio power-on state
+ * @param  isWifiOn Is the value to be saved. True turns radio on, false turns radio off
+ * @retval On success, true is returned. On error, false is returned.
+ */
+bool UserConfig::SetWifiOn(bool isWifiOn)
 {
-	cpp_freertos::LockGuard guard(WifiConfigGuardLock);
+	std::unique_ptr<Config_t> modify = std::make_unique<Config_t>();
 
-	return true;
+	GetConfig( modify.get() );
+	modify->wifi.isWifiOn = isWifiOn;
+	return SetConfig( std::move(modify) );
 }
 
 
-bool UserConfig::SetWifiPassword(Password_t &password)
+/**
+ * @brief  Stores a new WiFi password
+ * @param  password Is the value to be saved
+ * @retval On success, true is returned. On error, false is returned.
+ */
+bool UserConfig::SetWifiPassword(const Password_t *password)
 {
-	cpp_freertos::LockGuard guard(WifiConfigGuardLock);
+	std::unique_ptr<Config_t> modify = std::make_unique<Config_t>();
 
-	return true;
+	GetConfig( modify.get() );
+	modify->wifi.password = *password;
+	return SetConfig( std::move(modify) );
 }
 
 
-bool UserConfig::SetWifiSsid(Ssid_t &ssid)
+/**
+ * @brief  Stores a new WiFi SSID value
+ * @param  ssid Is the value to be saved
+ * @retval On success, true is returned. On error, false is returned.
+ */
+bool UserConfig::SetWifiSsid(const Ssid_t *ssid)
 {
-	cpp_freertos::LockGuard guard(WifiConfigGuardLock);
+	std::unique_ptr<Config_t> modify = std::make_unique<Config_t>();
 
-	return true;
+	GetConfig( modify.get() );
+	modify->wifi.ssid = *ssid;
+	return SetConfig( std::move(modify) );
 }
 

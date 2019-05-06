@@ -25,6 +25,8 @@
 #include "thread.hpp"
 #include "queue.hpp"
 
+class UserConfig;
+
 /**
  * @brief Defines a list of response messages that are available. The ResponseInterface
  * will generate the requested message and transmit to an external host.
@@ -48,14 +50,18 @@ typedef enum {
 class ResponseInterface : public cpp_freertos::Thread
 {
 	public:
-		ResponseInterface(cpp_freertos::Queue &h);
+		ResponseInterface(cpp_freertos::Queue &, UserConfig &);
 		~ResponseInterface();
 
 	protected:
 		void Run();
 
+		void AwsStatusHandler();
+		void WifiStatusHandler();
+
 	private:
 		cpp_freertos::Queue &msgHandle;
+		UserConfig &userConfigHandle;
 };
 
 

@@ -31,16 +31,18 @@
 
 class UserConfig
 {
-	friend CommandInterface;
-
 	public:
-		typedef std::array<uint8_t, 256> Key_t;
-		typedef std::array<uint8_t, 32> Password_t;
-		typedef std::array<uint8_t, 32> Ssid_t;
+		typedef std::array<uint8_t, 256> KeyValue_t;
+		typedef std::array<char, 32> Password_t;
+		typedef std::array<char, 32> Ssid_t;
+
+		typedef struct {
+			KeyValue_t value;
+			uint16_t size;
+		}Key_t;
 
 		typedef struct {
 			Key_t key;
-			uint16_t keySize;
 		}Aws_t;
 
 		typedef struct {
@@ -48,20 +50,6 @@ class UserConfig
 			Password_t password;
 			Ssid_t ssid;
 		} Wifi_t;
-
-		UserConfig() { GetConfig(); };
-
-		bool GetAwsConfig(const Aws_t &);
-		void ReleaseAwsConfig();
-
-		bool GetWifiConfig(const Wifi_t &);
-		void RelaseWifiConfig();
-
-	protected:
-
-	private:
-		cpp_freertos::MutexStandard AwsConfigGuard;
-		cpp_freertos::MutexStandard WifiConfigGuardLock;
 
 		typedef struct {
 			uint16_t tableSize;
@@ -71,19 +59,32 @@ class UserConfig
 			uint32_t checksum;
 		}Config_t;
 
-		Config_t config;
 		static constexpr uint16_t TableVersion = 1;
 		static constexpr uint16_t TableSize  = sizeof(Config_t);
 
-		void GetConfig();
-		bool SetConfig();
+		/* Note: this invokes file I/O from the "global" workspace before the kernel has been
+		 * started. This means the CRT file I/O requests ~400+ bytes during library initialization.
+		 * This heap memory remains allocated in the "global" workspace and is never used again. If
+		 * memory constraints become critical, need to reassess initializing this object using
+		 * an explicit call from a running thread.
+		 */
+		UserConfig() { GetConfig(&config); };
 
-		bool SetAwsKey(std::unique_ptr<Key_t> key, uint16_t size);
+		const Aws_t & GetAwsConfig() const;
+		const Wifi_t & GetWifiConfig() const;
 
+		bool SetAwsKey(std::unique_ptr<Key_t> );
 		bool SetWifiOn(bool );
-		bool SetWifiPassword(Password_t &password);
-		bool SetWifiSsid(Ssid_t &ssid);
+		bool SetWifiPassword(const Password_t * );
+		bool SetWifiSsid(const Ssid_t * );
 
+	protected:
+
+	private:
+		Config_t config;
+
+		void GetConfig(Config_t *);
+		bool SetConfig(std::unique_ptr<Config_t> );
 };
 
 #endif /* USERCONFIG_HPP_ */
