@@ -77,7 +77,7 @@
 #define ES_WIFI_USE_FIRMWAREUPDATE                  0
 #define ES_WIFI_USE_WPS                             0
                                                     
-#define ES_WIFI_USE_SPI                             0    
+#define ES_WIFI_USE_SPI                             1
 #define ES_WIFI_USE_UART                            (!ES_WIFI_USE_SPI)   
    
 

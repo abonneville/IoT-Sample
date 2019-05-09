@@ -57,7 +57,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-SPI_HandleTypeDef hspi;
+extern SPI_HandleTypeDef hspi3;
 static  int volatile spi_rx_event=0;
 static  int volatile spi_tx_event=0;
 static  int volatile cmddata_rdy_rising_event=0;
@@ -74,6 +74,9 @@ static  void SPI_WIFI_DelayUs(uint32_t);
 /*******************************************************************************
                        COM Driver Interface (SPI)
 *******************************************************************************/
+
+
+#if 0 /* As provided by ST, init re-routed and handled by STM32CubeMX init code */
 /**
   * @brief  Initialize SPI MSP
   * @param  hspi: SPI handle
@@ -157,22 +160,22 @@ int8_t SPI_WIFI_Init(uint16_t mode)
   
   if (mode == ES_WIFI_INIT)
   {
-    hspi.Instance               = SPI3;
-    SPI_WIFI_MspInit(&hspi);
+    hspi3.Instance               = SPI3;
+    SPI_WIFI_MspInit(&hspi3);
   
-    hspi.Init.Mode              = SPI_MODE_MASTER;
-    hspi.Init.Direction         = SPI_DIRECTION_2LINES;
-    hspi.Init.DataSize          = SPI_DATASIZE_16BIT;
-    hspi.Init.CLKPolarity       = SPI_POLARITY_LOW;
-    hspi.Init.CLKPhase          = SPI_PHASE_1EDGE;
-    hspi.Init.NSS               = SPI_NSS_SOFT;
-    hspi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; /* 80/8= 10MHz (Inventek WIFI module supportes up to 20MHz)*/
-    hspi.Init.FirstBit          = SPI_FIRSTBIT_MSB;
-    hspi.Init.TIMode            = SPI_TIMODE_DISABLE;
-    hspi.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
-    hspi.Init.CRCPolynomial     = 0;
+    hspi3.Init.Mode              = SPI_MODE_MASTER;
+    hspi3.Init.Direction         = SPI_DIRECTION_2LINES;
+    hspi3.Init.DataSize          = SPI_DATASIZE_16BIT;
+    hspi3.Init.CLKPolarity       = SPI_POLARITY_LOW;
+    hspi3.Init.CLKPhase          = SPI_PHASE_1EDGE;
+    hspi3.Init.NSS               = SPI_NSS_SOFT;
+    hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; /* 80/8= 10MHz (Inventek WIFI module supportes up to 20MHz)*/
+    hspi3.Init.FirstBit          = SPI_FIRSTBIT_MSB;
+    hspi3.Init.TIMode            = SPI_TIMODE_DISABLE;
+    hspi3.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
+    hspi3.Init.CRCPolynomial     = 0;
   
-    if(HAL_SPI_Init( &hspi ) != HAL_OK)
+    if(HAL_SPI_Init( &hspi3 ) != HAL_OK)
     {
       return -1;
     }
@@ -194,6 +197,41 @@ int8_t SPI_WIFI_Init(uint16_t mode)
   return rc;
 }
 
+#else
+
+/**
+  * @brief  Initialize SPI MSP
+  * @param  hspi: SPI handle
+  * @retval None
+  */
+void SPI_WIFI_MspInit(SPI_HandleTypeDef* hspi)
+{
+
+	/* SPI and GPIO initialization is completed during board initialization, and should not
+	 * be repeated here. See:
+	 * 	HAL_SPI_MspInit()
+	 * 	MX_GPIO_Init()
+	 */
+}
+
+
+/**
+  * @brief  Initialize the SPI3
+  * @param  None
+  * @retval None
+  */
+int8_t SPI_WIFI_Init(uint16_t mode)
+{
+	/* SPI initialization is completed during board initialization, and should not be repeated
+	 * here. See:
+	 * 	MX_SPI3_Init()
+	 */
+
+	return SPI_WIFI_ResetModule();
+}
+
+#endif
+
 
 int8_t SPI_WIFI_ResetModule(void)
 {
@@ -208,7 +246,7 @@ int8_t SPI_WIFI_ResetModule(void)
  
   while (WIFI_IS_CMDDATA_READY())
   {
-    Status = HAL_SPI_Receive(&hspi , &Prompt[count], 1, 0xFFFF);  
+    Status = HAL_SPI_Receive(&hspi3 , &Prompt[count], 1, 0xFFFF);
     count += 2;
     if(((HAL_GetTick() - tickstart ) > 0xFFFF) || (Status != HAL_OK))
     {
@@ -233,7 +271,7 @@ int8_t SPI_WIFI_ResetModule(void)
   */
 int8_t SPI_WIFI_DeInit(void)
 {
-  HAL_SPI_DeInit( &hspi );
+  HAL_SPI_DeInit( &hspi3 );
   RTOS_FREE_SEM_MUTEX();
   return 0;
 }
@@ -339,7 +377,7 @@ int16_t SPI_WIFI_ReceiveData(uint8_t *pData, uint16_t len, uint32_t timeout)
     if((length < len) || (!len))
     {
       spi_rx_event=1;
-      if (HAL_SPI_Receive_IT(&hspi, tmp, 1) != HAL_OK) {
+      if (HAL_SPI_Receive_IT(&hspi3, tmp, 1) != HAL_OK) {
         WIFI_DISABLE_NSS();
         UNLOCK_SPI();
         return ES_WIFI_ERROR_SPI_FAILED;
@@ -392,7 +430,7 @@ int16_t SPI_WIFI_SendData( uint8_t *pdata,  uint16_t len, uint32_t timeout)
   if (len > 1)
   {
     spi_tx_event=1;
-    if( HAL_SPI_Transmit_IT(&hspi, (uint8_t *)pdata , len/2) != HAL_OK)
+    if( HAL_SPI_Transmit_IT(&hspi3, (uint8_t *)pdata , len/2) != HAL_OK)
     {
       WIFI_DISABLE_NSS();
       UNLOCK_SPI();
@@ -407,7 +445,7 @@ int16_t SPI_WIFI_SendData( uint8_t *pdata,  uint16_t len, uint32_t timeout)
     Padding[1] = '\n';
 
     spi_tx_event=1;
-    if( HAL_SPI_Transmit_IT(&hspi, Padding, 1) != HAL_OK)
+    if( HAL_SPI_Transmit_IT(&hspi3, Padding, 1) != HAL_OK)
     {
       WIFI_DISABLE_NSS();
       UNLOCK_SPI();
@@ -436,26 +474,27 @@ void SPI_WIFI_Delay(uint32_t Delay)
   */
 void SPI_WIFI_DelayUs(uint32_t n)
 {
-  uint32_t freq = (SystemCoreClock/1000000L);
-  uint32_t ctrl;
-  uint32_t cycle;
-  
-  n=n*freq;
-  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-  ctrl = DWT->CTRL;
-  DWT->CTRL |= 1 ; // enable  counter
-  cycle = DWT->CYCCNT;
-  n += cycle;
-  if (n < cycle) 
-  {
-	 // wait for rewrap
-	 while(n < DWT->CYCCNT);
-  }
-  
-  while(DWT->CYCCNT < n);
-  
-  DWT->CTRL &= ~(ctrl & 1 ) ; // restore counter mode
-  return;
+	volatile      uint32_t ct;
+	uint32_t       loop_per_us;
+	static  uint32_t cycle_per_loop=0;
+
+	// calibration happen on first call for a duration of 1 ms * nbcycle per loop
+	// 10 cycle for STM32L4
+	if (cycle_per_loop == 0 )
+	{
+		uint32_t cycle_per_ms = (SystemCoreClock/1000L);
+		uint32_t   t;
+		ct=cycle_per_ms;
+		t=HAL_GetTick();
+		while(ct) ct--;
+		cycle_per_loop=HAL_GetTick()-t;
+		if (cycle_per_loop==0) cycle_per_loop=1;
+	}
+
+	loop_per_us = SystemCoreClock/1000000/cycle_per_loop;
+	ct = n * loop_per_us;
+	while(ct) ct--;
+	return;
 }
 
 /**
