@@ -64,9 +64,10 @@ static constexpr char fieldStatus[] = "status";
 
 
 /**
- * @brief Binds the CommandInterface to the requested ResponseInterface, then creates
+ * @brief Binds the CommandInterface to the helper objects, then creates
  * the thread. If the scheduler is already running, then then thread will begin
- * @param handle identifies which ResponseInterface will handle command response messaging
+ * @param mh handle for passing response messages
+ * @param uh handle for accessing configuration data
  */
 CommandInterface::CommandInterface(cpp_freertos::Queue &mh, UserConfig &uh)
 	: Thread("CommandInterface", STACK_SIZE_COMMANDS, THREAD_PRIORITY_ABOVE_NORMAL),
@@ -376,17 +377,17 @@ ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Bu
 	case 'p':
 		if (ParseCmdWord(first, fieldPassword)) {
 			/* Validate new password */
-			UserConfig::Password_t *pwdBegin = (UserConfig::Password_t *)(first + sizeof(fieldPassword) - 1);
-			UserConfig::Password_t *pwdEnd = (UserConfig::Password_t *)(last - 1);
-			size_t pwdSize = (size_t)pwdEnd - (size_t)pwdBegin;
+			UserConfig::PasswordValue_t *pwdBegin = (UserConfig::PasswordValue_t *)(first + sizeof(fieldPassword) - 1);
+			UserConfig::PasswordValue_t *pwdEnd = (UserConfig::PasswordValue_t *)(last - 1);
+			size_t size = (size_t)pwdEnd - (size_t)pwdBegin;
 
-			if (pwdSize > sizeof(UserConfig::Password_t)) {
+			if (size > sizeof(UserConfig::PasswordValue_t)) {
 				/* Discard, password is to large */
 				break;
 			}
 
 			/* Save new password */
-			if (userConfigHandle.SetWifiPassword(pwdBegin) == true) {
+			if (userConfigHandle.SetWifiPassword(pwdBegin, size) == true) {
 				responseId = RESPONSE_MSG_PROMPT;
 			}
 		}
@@ -395,17 +396,17 @@ ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Bu
 	case 's':
 		if (ParseCmdWord(first, fieldSsid)) {
 			/* Validate new ssid */
-			UserConfig::Ssid_t *ssidBegin = (UserConfig::Ssid_t *)(first + sizeof(fieldSsid) - 1);
-			UserConfig::Ssid_t *ssidEnd = (UserConfig::Ssid_t *)(last - 1);
+			UserConfig::SsidValue_t *ssidBegin = (UserConfig::SsidValue_t *)(first + sizeof(fieldSsid) - 1);
+			UserConfig::SsidValue_t *ssidEnd = (UserConfig::SsidValue_t *)(last - 1);
 			size_t size = (size_t)ssidEnd - (size_t)ssidBegin;
 
-			if (size > sizeof(UserConfig::Ssid_t)) {
+			if (size > sizeof(UserConfig::SsidValue_t)) {
 				/* Discard, SSID is to large */
 				break;
 			}
 
 			/* Save new SSID */
-			if (userConfigHandle.SetWifiSsid(ssidBegin) == true) {
+			if (userConfigHandle.SetWifiSsid(ssidBegin, size) == true) {
 				responseId = RESPONSE_MSG_PROMPT;
 			}
 		}

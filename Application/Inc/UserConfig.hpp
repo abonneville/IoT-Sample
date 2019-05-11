@@ -33,8 +33,18 @@ class UserConfig
 {
 	public:
 		typedef std::array<uint8_t, 256> KeyValue_t;
-		typedef std::array<char, 32> Password_t;
-		typedef std::array<char, 32> Ssid_t;
+		typedef std::array<char, 32> PasswordValue_t;
+		typedef std::array<char, 32> SsidValue_t;
+
+		typedef struct {
+			PasswordValue_t value;
+			size_t size;
+		}Password_t;
+
+		typedef struct {
+			SsidValue_t value;
+			size_t size;
+		} Ssid_t;
 
 		typedef struct {
 			KeyValue_t value;
@@ -75,8 +85,8 @@ class UserConfig
 
 		bool SetAwsKey(std::unique_ptr<Key_t> );
 		bool SetWifiOn(bool );
-		bool SetWifiPassword(const Password_t * );
-		bool SetWifiSsid(const Ssid_t * );
+		bool SetWifiPassword(const PasswordValue_t *, size_t );
+		bool SetWifiSsid(const SsidValue_t *, size_t );
 
 	protected:
 

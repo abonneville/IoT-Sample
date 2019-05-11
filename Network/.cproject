@@ -71,7 +71,7 @@
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
 									<listOptionValue builtIn="false" value="STM32L475xx"/>
 									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
-									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE='&lt;tls_config.h&gt;'"/>
+									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=&lt;tls_config.h&gt;"/>
 								</option>
 								<option id="com.atollic.truestudio.gcc.cstandard.1299089340" name="C standard" superClass="com.atollic.truestudio.gcc.cstandard" value="com.atollic.truestudio.gcc.cstandard.c1x" valueType="enumerated"/>
 								<inputType id="com.atollic.truestudio.gcc.input.1224346580" superClass="com.atollic.truestudio.gcc.input"/>
@@ -213,7 +213,7 @@
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
 									<listOptionValue builtIn="false" value="STM32L475xx"/>
 									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
-									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE='&lt;tls_config.h&gt;'"/>
+									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=&lt;tls_config.h&gt;"/>
 								</option>
 								<option id="com.atollic.truestudio.gcc.cstandard.1107411613" name="C standard" superClass="com.atollic.truestudio.gcc.cstandard" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.cstandard.c1x" valueType="enumerated"/>
 								<inputType id="com.atollic.truestudio.gcc.input.873023888" superClass="com.atollic.truestudio.gcc.input"/>

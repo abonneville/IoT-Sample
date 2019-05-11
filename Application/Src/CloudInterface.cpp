@@ -20,11 +20,11 @@
  *
  */
 
-#include <StartApplication.hpp>
+
+#include "ThreadConfig.hpp"
 #include "UserConfig.hpp"
-#include "CommandInterface.hpp"
-#include "ResponseInterface.hpp"
 #include "CloudInterface.hpp"
+#include "aws_wifi.h"
 
 
 /* Typedef -----------------------------------------------------------*/
@@ -35,47 +35,55 @@
 
 /* Variables ---------------------------------------------------------*/
 
-/*
- * All thread objects are being instantiated and linked via handle here, to avoid undefined
- * initialization if they were instantiated in different translation units (files). As this
- * project grows, this approach may have to change and use a singleton and/or factory design
- * pattern for distributing initialized object handles.
- */
-static UserConfig userConfig;
-
-constexpr static UBaseType_t itemSize = sizeof(ResponseId_t);
-constexpr static UBaseType_t maxItems = 5;
-static cpp_freertos::Queue msgQueue(maxItems, itemSize, "msgQueue");
-
-static ResponseInterface rspThread(msgQueue, userConfig);
-static CommandInterface cmdThread(msgQueue, userConfig);
-
-static CloudInterface cloudThread(userConfig);
-
 /* Function prototypes -----------------------------------------------*/
 
 /* External functions ------------------------------------------------*/
 
 
 /**
-  * @brief  The application entry point to C++
-  * @note	This method is intended to be called after platform initialization is completed
-  * 		in main()
-  */
-void StartApplication(void)
+ * @brief Creates the thread object, if the scheduler is already running, then then thread
+ * will begin.
+ */
+CloudInterface::CloudInterface(UserConfig &uh)
+	: Thread("CloudInterface", STACK_SIZE_CLOUD, THREAD_PRIORITY_NORMAL),
+	  userConfigHandle(uh)
 {
-	/* Note: When the RTOS scheduler is started, the main stack pointer (MSP) is reset,
-	 * effectively wiping out all stack/local main() variables and objects. Do not declare
-	 * any C/C++ threads here. If objects need to be declared here, then change the code
-	 * within prvPortStartFirstTask() to retain the MSP value.
-	 */
-	cpp_freertos::Thread::StartScheduler();
-
-	/* Infinite loop */
-	while (1)
-	{
-	}
+	Start();
 }
 
 
+/**
+ * @brief Implements the persistent loop for thread execution.
+ */
+void CloudInterface::Run()
+{
 
+	WIFIReturnCode_t wifiRes;
+	const UserConfig::Wifi_t &wifiConfig = userConfigHandle.GetWifiConfig();
+
+	WIFINetworkParams_t networkParms = {};
+	networkParms.pcPassword = wifiConfig.password.value.data();
+	networkParms.ucPasswordLength = wifiConfig.password.size - 1;
+	networkParms.pcSSID = wifiConfig.ssid.value.data();
+	networkParms.ucSSIDLength = wifiConfig.ssid.size - 1;
+	networkParms.xSecurity = eWiFiSecurityWPA2;
+
+	wifiRes = WIFI_On();
+
+	wifiRes = WIFI_ConnectAP(&networkParms);
+	if (WIFI_IsConnected() == 1) {
+		uint8_t ipAddress[4] = { 192, 168, 1, 1};
+		wifiRes = WIFI_Ping(ipAddress, 3, 10);
+		if (wifiRes == eWiFiSuccess) {
+			std::printf("\nSuccess: IP ping\n");
+		}
+		else
+		{
+			std::printf("\nFail: IP ping\n");
+		}
+	}
+
+	while (true) {
+		Thread::Delay(1000);
+	}
+}

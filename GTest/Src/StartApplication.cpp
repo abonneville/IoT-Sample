@@ -958,15 +958,17 @@ TEST_F(uConfig, SetValues)
 	constexpr UserConfig::KeyValue_t MyKey = {"MyKeyIsThis"};
 	testKey->value = MyKey;
 	testKey->size = sizeof(MyKey);
-	constexpr UserConfig::Password_t testPassword = {"MyPassword123*"};
-	constexpr UserConfig::Ssid_t testSsid = {"CoolThingsSSID"};
+	constexpr UserConfig::PasswordValue_t testPassword = {"MyPassword123*"};
+	constexpr UserConfig::SsidValue_t testSsid = {"CoolThingsSSID"};
+	size_t pwdSize = std::strlen(testPassword.data());
+	size_t ssidSize = std::strlen(testSsid.data());
 
 	/* Set parameters to a new value */
 	{
 		std::unique_ptr<UserConfig> testConfig = std::make_unique<UserConfig>();
 		EXPECT_EQ(testConfig->SetWifiOn(true), true);
-		EXPECT_EQ(testConfig->SetWifiPassword( &testPassword ), true);
-		EXPECT_EQ(testConfig->SetWifiSsid(  &testSsid ), true);
+		EXPECT_EQ(testConfig->SetWifiPassword( &testPassword, pwdSize ), true);
+		EXPECT_EQ(testConfig->SetWifiSsid(  &testSsid, ssidSize ), true);
 		EXPECT_EQ(testConfig->SetAwsKey( std::move(testKey) ), true);
 		testConfig.release();
 	}
@@ -974,8 +976,10 @@ TEST_F(uConfig, SetValues)
 		std::unique_ptr<UserConfig> testConfig = std::make_unique<UserConfig>();
 		const UserConfig::Wifi_t &wifi = testConfig->GetWifiConfig();
 		EXPECT_EQ(wifi.isWifiOn, true);
-		ASSERT_STREQ( wifi.password.data(), testPassword.data() );
-		ASSERT_STREQ( wifi.ssid.data(), testSsid.data() );
+		ASSERT_STREQ( wifi.password.value.data(), testPassword.data() );
+		EXPECT_EQ( wifi.password.size, pwdSize );
+		ASSERT_STREQ( wifi.ssid.value.data(), testSsid.data() );
+		EXPECT_EQ( wifi.ssid.size, ssidSize );
 		testConfig.release();
 	}
 

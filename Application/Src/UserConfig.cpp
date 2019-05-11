@@ -157,12 +157,13 @@ bool UserConfig::SetWifiOn(bool isWifiOn)
  * @param  password Is the value to be saved
  * @retval On success, true is returned. On error, false is returned.
  */
-bool UserConfig::SetWifiPassword(const Password_t *password)
+bool UserConfig::SetWifiPassword(const PasswordValue_t *password, size_t size)
 {
 	std::unique_ptr<Config_t> modify = std::make_unique<Config_t>();
 
 	GetConfig( modify.get() );
-	modify->wifi.password = *password;
+	modify->wifi.password.value = *password;
+	modify->wifi.password.size = size;
 	return SetConfig( std::move(modify) );
 }
 
@@ -172,12 +173,13 @@ bool UserConfig::SetWifiPassword(const Password_t *password)
  * @param  ssid Is the value to be saved
  * @retval On success, true is returned. On error, false is returned.
  */
-bool UserConfig::SetWifiSsid(const Ssid_t *ssid)
+bool UserConfig::SetWifiSsid(const SsidValue_t *ssid, size_t size)
 {
 	std::unique_ptr<Config_t> modify = std::make_unique<Config_t>();
 
 	GetConfig( modify.get() );
-	modify->wifi.ssid = *ssid;
+	modify->wifi.ssid.value = *ssid;
+	modify->wifi.ssid.size = size;
 	return SetConfig( std::move(modify) );
 }
 

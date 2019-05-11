@@ -40,6 +40,11 @@
 /* Wi-Fi configuration includes. */
 #include "aws_wifi_config.h"
 
+#ifdef __cplusplus
+
+extern "C" {
+#endif /* extern "C" */
+
 /**
  * @brief Return code denoting API status.
  *
@@ -473,5 +478,9 @@ WIFIReturnCode_t WIFI_GetPMMode( WIFIPMMode_t * pxPMModeType,
  * @return pdTRUE if the link is up, pdFalse otherwise.
  */
 BaseType_t WIFI_IsConnected( void );
+
+#ifdef __cplusplus
+}
+#endif /* extern "C" */
 
 #endif /* _AWS_WIFI_H_ */

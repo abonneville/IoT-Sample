@@ -6,6 +6,7 @@
 		<project>Application</project>
 		<project>FreeRTOS</project>
 		<project>HAL-Extension</project>
+		<project>Network</project>
 		<project>STM32CubeMX</project>
 	</projects>
 	<buildSpec>

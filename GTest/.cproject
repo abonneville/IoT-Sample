@@ -161,6 +161,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Debug}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Debug}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\GTest-STM32\Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Debug}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.libraries.list.1424955356" name="Libraries" superClass="com.atollic.truestudio.ldcc.libraries.list" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="FreeRTOS"/>
@@ -168,6 +169,7 @@
 									<listOptionValue builtIn="false" value="STM32CubeMX"/>
 									<listOptionValue builtIn="false" value="GTest-STM32"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Application"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Network"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1823446320" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" useByScannerDiscovery="false" value="-Wl,-cref,-u,Reset_Handler -Wl,-u_printf_float" valueType="string"/>
 								<option id="com.atollic.truestudio.ldcc.misc.genmapfile.1629235342" name="Create map file" superClass="com.atollic.truestudio.ldcc.misc.genmapfile" useByScannerDiscovery="false"/>
@@ -353,6 +355,7 @@
 									<listOptionValue builtIn="false" value="HAL-Extension"/>
 									<listOptionValue builtIn="false" value="STM32CubeMX"/>
 									<listOptionValue builtIn="false" value="GTest-STM32"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Network"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1812696777" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Release}&quot;"/>
@@ -360,6 +363,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Release}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Release}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\GTest-STM32\Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Release}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.optimization.malloc_page_size.1072886724" name="Page size allocation for malloc() " superClass="com.atollic.truestudio.ldcc.optimization.malloc_page_size" useByScannerDiscovery="false" value="com.atollic.truestudio.ldcc.optimization.malloc_page_size.128" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1087604680" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" useByScannerDiscovery="false" value="-Wl,-cref,-u,Reset_Handler -Wl,-u_printf_float" valueType="string"/>
@@ -546,6 +550,7 @@
 									<listOptionValue builtIn="false" value="HAL-Extension"/>
 									<listOptionValue builtIn="false" value="STM32CubeMX"/>
 									<listOptionValue builtIn="false" value="GTest-STM32"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Network"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1301053959" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Release}&quot;"/>
@@ -668,6 +673,32 @@
 			</profile>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.release.1518366166;com.atollic.truestudio.exe.release.1518366166.2031504340;com.atollic.truestudio.exe.release.toolchain.gcc.1836874447;com.atollic.truestudio.gcc.input.850396938">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.atollic.truestudio.mbs.ARMToolsPerProjectProfileC"/>
+			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
+				<buildOutputProvider>
+					<openAction enabled="true" filePath=""/>
+					<parser enabled="true"/>
+				</buildOutputProvider>
+				<scannerInfoProvider id="makefileGenerator">
+					<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true"/>
+					<parser enabled="true"/>
+				</scannerInfoProvider>
+			</profile>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.release.1518366166.21785232;com.atollic.truestudio.exe.release.1518366166.21785232.;com.atollic.truestudio.exe.release.toolchain.gpp.361142640;com.atollic.truestudio.gpp.input.1827115931">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.atollic.truestudio.mbs.ARMToolsPerProjectProfileCPP"/>
+			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
+				<buildOutputProvider>
+					<openAction enabled="true" filePath=""/>
+					<parser enabled="true"/>
+				</buildOutputProvider>
+				<scannerInfoProvider id="makefileGenerator">
+					<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true"/>
+					<parser enabled="true"/>
+				</scannerInfoProvider>
+			</profile>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.release.1518366166.21785232;com.atollic.truestudio.exe.release.1518366166.21785232.;com.atollic.truestudio.exe.release.toolchain.gcc.1935931256;com.atollic.truestudio.gcc.input.705360717">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.atollic.truestudio.mbs.ARMToolsPerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
 				<buildOutputProvider>

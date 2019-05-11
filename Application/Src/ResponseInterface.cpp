@@ -201,8 +201,8 @@ void ResponseInterface::WifiStatusHandler()
 	const UserConfig::Wifi_t &wifi = userConfigHandle.GetWifiConfig();
 
 	std::printf("-- WiFi Status --\n");
-	std::printf("SSID: %s\n", wifi.ssid.data() );
-	std::printf("Password: %s\n", wifi.password.data() );
+	std::printf("SSID: %s\n", wifi.ssid.value.data() );
+	std::printf("Password: %s\n", wifi.password.value.data() );
 	std::printf("Radio is %s.\n", ( wifi.isWifiOn == true ? "ON" : "OFF") );
 	std::fflush(stdout);
 }

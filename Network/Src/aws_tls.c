@@ -25,11 +25,14 @@
 
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
-#include "FreeRTOSIPConfig.h"
+#include "task.h"
+#include "semphr.h"
+
+//#include "FreeRTOSIPConfig.h"
 #include "aws_tls.h"
-#include "aws_crypto.h"
-#include "aws_pkcs11.h"
-#include "aws_pkcs11_config.h"
+//#include "aws_crypto.h"
+//#include "aws_pkcs11.h"
+//#include "aws_pkcs11_config.h"
 #include "task.h"
 #include "aws_clientcredential.h"
 #include "aws_default_root_certificates.h"
@@ -93,17 +96,43 @@ typedef struct TLSContext
     mbedtls_pk_info_t xMbedPkInfo;
 
     /* PKCS#11. */
-    CK_FUNCTION_LIST_PTR xP11FunctionList;
-    CK_SESSION_HANDLE xP11Session;
-    CK_OBJECT_HANDLE xP11PrivateKey;
+//    CK_FUNCTION_LIST_PTR xP11FunctionList;
+//    CK_SESSION_HANDLE xP11Session;
+//    CK_OBJECT_HANDLE xP11PrivateKey;
 } TLSContext_t;
 
-
-#define TLS_PRINT( X )    vLoggingPrintf X
+/*
+ * TODO implement a real logging method to aid development
+ */
+//#define TLS_PRINT( X )    vLoggingPrintf X
+#define TLS_PRINT( X )    printf X
 
 /*
  * Helper routines.
  */
+
+/*-----------------------------------------------------------*/
+
+/* For convenience and to enable rapid evaluation the keys are stored in const
+ * strings, see aws_clientcredential_keys.h.  THIS IS NOT GOOD PRACTICE FOR
+ * PRODUCTION SYSTEMS WHICH MUST STORE KEYS SECURELY.  The variables declared
+ * here are externed in aws_clientcredential_keys.h for access by other
+ * modules. */
+const char clientcredentialCLIENT_CERTIFICATE_PEM[] = keyCLIENT_CERTIFICATE_PEM;
+const char * clientcredentialJITR_DEVICE_CERTIFICATE_AUTHORITY_PEM = keyJITR_DEVICE_CERTIFICATE_AUTHORITY_PEM;
+const char clientcredentialCLIENT_PRIVATE_KEY_PEM[] = keyCLIENT_PRIVATE_KEY_PEM;
+
+/*
+ * Length of device certificate included from aws_clientcredential_keys.h .
+ */
+const uint32_t clientcredentialCLIENT_CERTIFICATE_LENGTH = sizeof( clientcredentialCLIENT_CERTIFICATE_PEM );
+
+/*
+ * Length of device private key included from aws_clientcredential_keys.h .
+ */
+const uint32_t clientcredentialCLIENT_PRIVATE_KEY_LENGTH = sizeof( clientcredentialCLIENT_PRIVATE_KEY_PEM );
+
+
 
 /**
  * @brief TLS internal context rundown helper routine.
@@ -118,17 +147,19 @@ static void prvFreeContext( TLSContext_t * pxCtx )
         mbedtls_ssl_close_notify( &pxCtx->xMbedSslCtx ); /*lint !e534 The error is already taken care of inside mbedtls_ssl_close_notify*/
         mbedtls_ssl_free( &pxCtx->xMbedSslCtx );
         mbedtls_ssl_config_free( &pxCtx->xMbedSslConfig );
-
+#if 0
         /* Cleanup PKCS#11. */
         if( ( NULL != pxCtx->xP11FunctionList ) &&
             ( NULL != pxCtx->xP11FunctionList->C_CloseSession ) )
         {
             pxCtx->xP11FunctionList->C_CloseSession( pxCtx->xP11Session ); /*lint !e534 This function always return CKR_OK. */
         }
-
+#endif
         pxCtx->xTLSHandshakeSuccessful = pdFALSE;
     }
 }
+
+
 
 /**
  * @brief Network send callback shim.
@@ -166,6 +197,7 @@ static int prvNetworkRecv( void * pvContext,
     return ( int ) pxCtx->xNetworkRecv( pxCtx->pvCallerContext, pucReceiveBuffer, xReceiveLength );
 }
 
+#if 0
 /**
  * @brief Callback that wraps PKCS#11 for pseudo-random number generation.
  *
@@ -192,6 +224,8 @@ static int prvGenerateRandomBytes( void * pvCtx,
 
     return xResult;
 }
+#endif
+
 
 /**
  * @brief Callback that enforces a worst-case expiration check on TLS server
@@ -260,6 +294,7 @@ static int prvCheckCertificate( void * pvCtx,
 }
 
 
+#if 0
 /**
  * @brief Sign a cryptographic hash with the private key.
  *
@@ -318,6 +353,7 @@ static int prvPrivateKeySigningCallback( void * pvContext,
 
     return xResult;
 }
+
 
 /**
  * @brief Helper for setting up potentially hardware-based cryptographic context
@@ -523,6 +559,68 @@ static int prvInitializeClientCredential( TLSContext_t * pxCtx )
     return xResult;
 }
 
+#endif
+
+/**
+ * @brief Helper for setting up potentially hardware-based cryptographic context
+ * for the client TLS certificate and private key.
+ *
+ * @param Caller context.
+ *
+ * @return Zero on success.
+ */
+static int prvInitializeClientCredential( TLSContext_t * pxCtx )
+{
+    BaseType_t xResult = 0;
+
+    /* Initialize the mbed contexts. */
+    mbedtls_x509_crt_init( &pxCtx->xMbedX509Cli );
+
+
+
+    /* Decode the client certificate. */
+    if( 0 == xResult )
+    {
+        xResult = mbedtls_x509_crt_parse( &pxCtx->xMbedX509Cli,
+            ( const unsigned char * ) clientcredentialCLIENT_CERTIFICATE_PEM,
+            1 + strlen( clientcredentialCLIENT_CERTIFICATE_PEM ) );
+    }
+
+    /*
+     * Add a JITR device issuer certificate, if present.
+     */
+    if( ( 0 == xResult ) &&
+        ( NULL != clientcredentialJITR_DEVICE_CERTIFICATE_AUTHORITY_PEM ) )
+    {
+        /* Decode the JITR issuer. The device client certificate will get
+         * inserted as the first certificate in this chain below. */
+        xResult = mbedtls_x509_crt_parse(
+            &pxCtx->xMbedX509Cli,
+            ( const unsigned char * ) clientcredentialJITR_DEVICE_CERTIFICATE_AUTHORITY_PEM,
+            1 + strlen( clientcredentialJITR_DEVICE_CERTIFICATE_AUTHORITY_PEM ) );
+    }
+
+    /*
+     * Attach the client certificate and private key to the TLS configuration.
+     */
+    if( 0 == xResult )
+    {
+        xResult = mbedtls_ssl_conf_own_cert( &pxCtx->xMbedSslConfig,
+                                             &pxCtx->xMbedX509Cli,
+                                             &pxCtx->xMbedPkCtx );
+    }
+
+
+    if( 0 != xResult )
+    {
+        TLS_PRINT( ( "ERROR: Initializing client credentials from flash into TLS context failed with error %d.\r\n", xResult ) );
+    }
+
+    return xResult;
+}
+
+
+
 /*
  * Interface routines.
  */
@@ -532,7 +630,7 @@ BaseType_t TLS_Init( void ** ppvContext,
 {
     BaseType_t xResult = 0;
     TLSContext_t * pxCtx = NULL;
-    CK_C_GetFunctionList xCkGetFunctionList = NULL;
+//    CK_C_GetFunctionList xCkGetFunctionList = NULL;
 
     /* Allocate an internal context. */
     pxCtx = ( TLSContext_t * ) pvPortMalloc( sizeof( TLSContext_t ) ); /*lint !e9087 !e9079 Allow casting void* to other types. */
@@ -551,7 +649,7 @@ BaseType_t TLS_Init( void ** ppvContext,
         pxCtx->xNetworkRecv = pxParams->pxNetworkRecv;
         pxCtx->xNetworkSend = pxParams->pxNetworkSend;
         pxCtx->pvCallerContext = pxParams->pvCallerContext;
-
+#if 0
         /* Get the function pointer list for the PKCS#11 module. */
         xCkGetFunctionList = C_GetFunctionList;
         xResult = ( BaseType_t ) xCkGetFunctionList( &pxCtx->xP11FunctionList );
@@ -567,11 +665,16 @@ BaseType_t TLS_Init( void ** ppvContext,
                 xResult = CKR_OK;
             }
         }
+
     }
     else
     {
         xResult = ( BaseType_t ) CKR_HOST_MEMORY;
     }
+#else
+	}
+#endif
+
 
     return xResult;
 }
@@ -603,7 +706,10 @@ BaseType_t TLS_Connect( void * pvContext )
     TLSContext_t * pxCtx = ( TLSContext_t * ) pvContext; /*lint !e9087 !e9079 Allow casting void* to other types. */
 
     /* Ensure that the FreeRTOS heap is used. */
-    CRYPTO_ConfigureHeap();
+    /* aab, this is already in place at the syscall level, calloc and free redirect to FreeRTOS heap
+     * TODO verify mbed uses FreeRTOS heap
+     */
+    //CRYPTO_ConfigureHeap();
 
     /* Initialize mbedTLS structures. */
     mbedtls_ssl_init( &pxCtx->xMbedSslCtx );
@@ -649,6 +755,7 @@ BaseType_t TLS_Connect( void * pvContext )
         }
     }
 
+
     /* Start with protocol defaults. */
     if( 0 == xResult )
     {
@@ -669,7 +776,8 @@ BaseType_t TLS_Connect( void * pvContext )
         mbedtls_ssl_conf_authmode( &pxCtx->xMbedSslConfig, MBEDTLS_SSL_VERIFY_REQUIRED );
 
         /* Set the RNG callback. */
-        mbedtls_ssl_conf_rng( &pxCtx->xMbedSslConfig, &prvGenerateRandomBytes, pxCtx ); /*lint !e546 Nothing wrong here. */
+// TODO        mbedtls_ssl_conf_rng( &pxCtx->xMbedSslConfig, &prvGenerateRandomBytes, pxCtx ); /*lint !e546 Nothing wrong here. */
+        mbedtls_ssl_conf_rng( &pxCtx->xMbedSslConfig, mbedtls_ctr_drbg_random, pxCtx );
 
         /* Set issuer certificate. */
         mbedtls_ssl_conf_ca_chain( &pxCtx->xMbedSslConfig, &pxCtx->xMbedX509CA, NULL );
