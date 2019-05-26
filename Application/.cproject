@@ -6,8 +6,11 @@
 				<externalSettings>
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/HAL-Extension"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Application"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/HAL-Extension/Debug"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Application/Debug"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="HAL-Extension" srcPrefixMapping="" srcRootPath=""/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Application" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>
 				<extensions>
@@ -86,7 +89,7 @@
 								<option id="com.atollic.truestudio.gpp.optimization.fno_exceptions.419963011" name="Disable exception handling" superClass="com.atollic.truestudio.gpp.optimization.fno_exceptions" value="true" valueType="boolean"/>
 								<option id="com.atollic.truestudio.common_options.target.interwork.94392954" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false"/>
 								<option id="com.atollic.truestudio.gpp.cppstandard.1861440801" name="C++ standard" superClass="com.atollic.truestudio.gpp.cppstandard" value="com.atollic.truestudio.gpp.cppstandard.cpp14" valueType="enumerated"/>
-								<option id="com.atollic.truestudio.gpp.directories.select.486379890" name="Include path" superClass="com.atollic.truestudio.gpp.directories.select" valueType="includePath">
+								<option id="com.atollic.truestudio.gpp.directories.select.486379890" name="Include path" superClass="com.atollic.truestudio.gpp.directories.select" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}&quot;"/>
@@ -101,6 +104,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/portable}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.symbols.defined.281741613" name="Defined symbols" superClass="com.atollic.truestudio.gpp.symbols.defined" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
@@ -231,6 +236,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/portable}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.symbols.defined.826360119" name="Defined symbols" superClass="com.atollic.truestudio.gpp.symbols.defined" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>

@@ -148,7 +148,7 @@ void StartApplication(void)
 }
 
 
-#if 0
+#if 1
 TEST(cleanLineBuffer, EmptyBuffer) {
 	std::array<char, 16> testBuffer;
 	testBuffer.fill(0x5A);
@@ -521,7 +521,7 @@ TEST_F(calloc, OutOfMemory){
 
 
 
-#else
+//#else
 
 TEST_F(fopen, ReadFlags)
 {

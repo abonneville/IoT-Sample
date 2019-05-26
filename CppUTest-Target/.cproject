@@ -19,7 +19,7 @@
 							<option id="com.atollic.truestudio.toolchain_options.mcu.1789980542" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu" useByScannerDiscovery="false" value="STM32L475VG" valueType="string"/>
 							<option id="com.atollic.truestudio.toolchain_options.vendor.901248713" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor" useByScannerDiscovery="false" value="STMicroelectronics" valueType="string"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.GNU_ELF" id="com.atollic.truestudio.exe.debug.toolchain.platform.2054752829" isAbstract="false" name="Debug platform" superClass="com.atollic.truestudio.exe.debug.toolchain.platform"/>
-							<builder buildPath="${workspace_loc:/Startup}/Debug" customBuilderProperties="toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.2.0\\ARMTools\\bin|toolChainpathType=1|" errorParsers="" id="com.atollic.truestudio.mbs.builder1.1222194476" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.atollic.truestudio.mbs.builder1">
+							<builder buildPath="${workspace_loc:/Startup}/Debug" customBuilderProperties="toolChainpathType=1|toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.2.0\\ARMTools\\bin|" errorParsers="" id="com.atollic.truestudio.mbs.builder1.1222194476" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.atollic.truestudio.mbs.builder1">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Debug"/>
 								</outputEntries>
@@ -100,15 +100,13 @@
 							</tool>
 							<tool command="arm-atollic-eabi-g++ -c" commandLinePattern="${COMMAND} ${INPUTS} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="com.atollic.truestudio.exe.debug.toolchain.gpp.981298185" name="C++ Compiler" superClass="com.atollic.truestudio.exe.debug.toolchain.gpp">
 								<option id="com.atollic.truestudio.gpp.symbols.defined.1619552487" name="Defined symbols" superClass="com.atollic.truestudio.gpp.symbols.defined" useByScannerDiscovery="false" valueType="stringList">
+									<listOptionValue builtIn="false" value="CPPUTEST_MEM_LEAK_DETECTION_DISABLED"/>
+									<listOptionValue builtIn="false" value="CPPUTEST_STD_CPP_LIB_DISABLED"/>
+									<listOptionValue builtIn="false" value="__APPLE__"/>
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
 									<listOptionValue builtIn="false" value="STM32L475xx&#13;&#10;"/>
 									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
-									<listOptionValue builtIn="false" value="GTEST_OS_BARE_METAL=1"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_PTHREAD=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_POSIX_RE=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_DEATH_TEST=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_STREAM_REDIRECTION=0"/>
 								</option>
 								<option id="com.atollic.truestudio.common_options.target.endianess.176262651" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.mcpu.630487808" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L475VG" valueType="enumerated"/>
@@ -119,6 +117,7 @@
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gpp.directories.select.1347599520" name="Include path" superClass="com.atollic.truestudio.gpp.directories.select" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;C:\Source\Public\cpputest\cpputest\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Inc}&quot;"/>
@@ -131,10 +130,11 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\googletest\include\gtest&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\googletest\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/portable}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.cppstandard.570635598" name="C++ standard" superClass="com.atollic.truestudio.gpp.cppstandard" useByScannerDiscovery="false" value="com.atollic.truestudio.gpp.cppstandard.cpp14" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gpp.optimization.prep_data.1162978720" name="Prepare dead data removal" superClass="com.atollic.truestudio.gpp.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
@@ -157,19 +157,19 @@
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1904885441" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\Source\Public\cpputest\cpputest-stm32\Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Debug}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Debug}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\GTest-STM32\Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Debug}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.libraries.list.1424955356" name="Libraries" superClass="com.atollic.truestudio.ldcc.libraries.list" useByScannerDiscovery="false" valueType="libs">
+									<listOptionValue builtIn="false" value="cpputest-stm32"/>
 									<listOptionValue builtIn="false" value="FreeRTOS"/>
 									<listOptionValue builtIn="false" value="HAL-Extension"/>
 									<listOptionValue builtIn="false" value="STM32CubeMX"/>
-									<listOptionValue builtIn="false" value="GTest-STM32"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Application"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Network"/>
+									<listOptionValue builtIn="false" value="Application"/>
+									<listOptionValue builtIn="false" value="Network"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1823446320" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" useByScannerDiscovery="false" value="-Wl,-cref,-u,Reset_Handler -Wl,-u_printf_float" valueType="string"/>
 								<option id="com.atollic.truestudio.ldcc.misc.genmapfile.1629235342" name="Create map file" superClass="com.atollic.truestudio.ldcc.misc.genmapfile" useByScannerDiscovery="false"/>
@@ -293,15 +293,13 @@
 							</tool>
 							<tool id="com.atollic.truestudio.exe.release.toolchain.gpp.981298185" name="C++ Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gpp">
 								<option id="com.atollic.truestudio.gpp.symbols.defined.1619552487" name="Defined symbols" superClass="com.atollic.truestudio.gpp.symbols.defined" useByScannerDiscovery="false" valueType="stringList">
+									<listOptionValue builtIn="false" value="CPPUTEST_MEM_LEAK_DETECTION_DISABLED"/>
+									<listOptionValue builtIn="false" value="CPPUTEST_STD_CPP_LIB_DISABLED"/>
+									<listOptionValue builtIn="false" value="__APPLE__"/>
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
 									<listOptionValue builtIn="false" value="STM32L475xx&#13;&#10;"/>
 									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
-									<listOptionValue builtIn="false" value="GTEST_OS_BARE_METAL=1"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_PTHREAD=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_POSIX_RE=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_DEATH_TEST=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_STREAM_REDIRECTION=0"/>
 								</option>
 								<option id="com.atollic.truestudio.common_options.target.endianess.176262651" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.mcpu.630487808" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L475VG" valueType="enumerated"/>
@@ -312,6 +310,7 @@
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gpp.directories.select.1548813435" name="Include path" superClass="com.atollic.truestudio.gpp.directories.select" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;C:\Source\Public\cpputest\cpputest\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Inc}&quot;"/>
@@ -324,10 +323,11 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\googletest\include\gtest&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\googletest\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/portable}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.cppstandard.953178544" name="C++ standard" superClass="com.atollic.truestudio.gpp.cppstandard" useByScannerDiscovery="false" value="com.atollic.truestudio.gpp.cppstandard.cpp14" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gpp.optimization.prep_data.181101359" name="Prepare dead data removal" superClass="com.atollic.truestudio.gpp.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
@@ -350,20 +350,20 @@
 								<option id="com.atollic.truestudio.common_options.target.fpu.829683864" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1297069055" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.ldcc.libraries.list.514556665" name="Libraries" superClass="com.atollic.truestudio.ldcc.libraries.list" useByScannerDiscovery="false" valueType="libs">
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Application"/>
+									<listOptionValue builtIn="false" value="cpputest-stm32"/>
 									<listOptionValue builtIn="false" value="FreeRTOS"/>
 									<listOptionValue builtIn="false" value="HAL-Extension"/>
 									<listOptionValue builtIn="false" value="STM32CubeMX"/>
-									<listOptionValue builtIn="false" value="GTest-STM32"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Network"/>
+									<listOptionValue builtIn="false" value="Application"/>
+									<listOptionValue builtIn="false" value="Network"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1812696777" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath" useByScannerDiscovery="false" valueType="libPaths">
+									<listOptionValue builtIn="false" value="&quot;C:\Source\Public\cpputest\cpputest-stm32\Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\GTest-STM32\Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Release}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.optimization.malloc_page_size.1072886724" name="Page size allocation for malloc() " superClass="com.atollic.truestudio.ldcc.optimization.malloc_page_size" useByScannerDiscovery="false" value="com.atollic.truestudio.ldcc.optimization.malloc_page_size.128" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1087604680" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" useByScannerDiscovery="false" value="-Wl,-cref,-u,Reset_Handler -Wl,-u_printf_float" valueType="string"/>
@@ -409,7 +409,7 @@
 							<option id="com.atollic.truestudio.toolchain_options.mcu.930190607" name="Microcontroller" superClass="com.atollic.truestudio.toolchain_options.mcu" useByScannerDiscovery="false" value="STM32L475VG" valueType="string"/>
 							<option id="com.atollic.truestudio.toolchain_options.vendor.847807417" name="Vendor name" superClass="com.atollic.truestudio.toolchain_options.vendor" useByScannerDiscovery="false" value="STMicroelectronics" valueType="string"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.GNU_ELF" id="com.atollic.truestudio.exe.release.toolchain.platform.188255168" isAbstract="false" name="Release platform" superClass="com.atollic.truestudio.exe.release.toolchain.platform"/>
-							<builder buildPath="${workspace_loc:/Startup}/Release" customBuilderProperties="toolChainpathType=3|toolChainpathString=C:\\Tools\\8.2.1-1.4-20190214-0604\\bin|" id="com.atollic.truestudio.mbs.builder1.1269983712" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.atollic.truestudio.mbs.builder1">
+							<builder buildPath="${workspace_loc:/Startup}/Release" customBuilderProperties="toolChainpathType=1|toolChainpathString=C:\\Program Files (x86)\\Atollic\\TrueSTUDIO for STM32 9.2.0\\ARMTools\\bin|" id="com.atollic.truestudio.mbs.builder1.1269983712" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.atollic.truestudio.mbs.builder1">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="Release"/>
 								</outputEntries>
@@ -488,15 +488,13 @@
 							</tool>
 							<tool command="${TOOL_EXEC_PREFIX}g++ -c" id="com.atollic.truestudio.exe.release.toolchain.gpp.361142640" name="C++ Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gpp">
 								<option id="com.atollic.truestudio.gpp.symbols.defined.1069459311" name="Defined symbols" superClass="com.atollic.truestudio.gpp.symbols.defined" useByScannerDiscovery="false" valueType="stringList">
+									<listOptionValue builtIn="false" value="CPPUTEST_MEM_LEAK_DETECTION_DISABLED"/>
+									<listOptionValue builtIn="false" value="CPPUTEST_STD_CPP_LIB_DISABLED"/>
+									<listOptionValue builtIn="false" value="__APPLE__"/>
 									<listOptionValue builtIn="false" value="__weak=__attribute__((weak))"/>
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
 									<listOptionValue builtIn="false" value="STM32L475xx&#13;&#10;"/>
 									<listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))"/>
-									<listOptionValue builtIn="false" value="GTEST_OS_BARE_METAL=1"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_PTHREAD=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_POSIX_RE=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_DEATH_TEST=0"/>
-									<listOptionValue builtIn="false" value="GTEST_HAS_STREAM_REDIRECTION=0"/>
 								</option>
 								<option id="com.atollic.truestudio.common_options.target.endianess.887942240" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.mcpu.1037293944" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L475VG" valueType="enumerated"/>
@@ -507,6 +505,7 @@
 								<option id="com.atollic.truestudio.common_options.target.fpu.418388010" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1209717562" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gpp.directories.select.130435097" name="Include path" superClass="com.atollic.truestudio.gpp.directories.select" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;C:\Source\Public\cpputest\cpputest\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Inc}&quot;"/>
@@ -519,10 +518,11 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\googletest\include\gtest&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\googletest\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/enl/portable}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.cppstandard.1372561708" name="C++ standard" superClass="com.atollic.truestudio.gpp.cppstandard" useByScannerDiscovery="false" value="com.atollic.truestudio.gpp.cppstandard.cpp14" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.gpp.optimization.prep_data.194475237" name="Prepare dead data removal" superClass="com.atollic.truestudio.gpp.optimization.prep_data" useByScannerDiscovery="false" value="true" valueType="boolean"/>
@@ -545,19 +545,19 @@
 								<option id="com.atollic.truestudio.common_options.target.fpu.1660375625" name="Floating point" superClass="com.atollic.truestudio.common_options.target.fpu" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpu.hard" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.common_options.target.fpucore.1299042814" name="FPU" superClass="com.atollic.truestudio.common_options.target.fpucore" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.fpucore.fpv4-sp-d16" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.ldcc.libraries.list.766132080" name="Libraries" superClass="com.atollic.truestudio.ldcc.libraries.list" useByScannerDiscovery="false" valueType="libs">
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Application"/>
+									<listOptionValue builtIn="false" value="cpputest-stm32"/>
 									<listOptionValue builtIn="false" value="FreeRTOS"/>
 									<listOptionValue builtIn="false" value="HAL-Extension"/>
 									<listOptionValue builtIn="false" value="STM32CubeMX"/>
-									<listOptionValue builtIn="false" value="GTest-STM32"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="Network"/>
+									<listOptionValue builtIn="false" value="Application"/>
+									<listOptionValue builtIn="false" value="Network"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.libraries.searchpath.1301053959" name="Library search path" superClass="com.atollic.truestudio.ldcc.libraries.searchpath" useByScannerDiscovery="false" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Source\GoogleTest\GTest-STM32\Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Application/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Debug}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.ldcc.optimization.malloc_page_size.2145933668" name="Page size allocation for malloc() " superClass="com.atollic.truestudio.ldcc.optimization.malloc_page_size" useByScannerDiscovery="false" value="com.atollic.truestudio.ldcc.optimization.malloc_page_size.128" valueType="enumerated"/>
 								<option id="com.atollic.truestudio.ldcc.misc.linkerflags.1399995278" name="Other options" superClass="com.atollic.truestudio.ldcc.misc.linkerflags" useByScannerDiscovery="false" value="-Wl,-cref,-u,Reset_Handler -Wl,-u_printf_float" valueType="string"/>
@@ -646,8 +646,8 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.debug.1518366166;com.atollic.truestudio.exe.debug.1518366166.;com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447;com.atollic.truestudio.gcc.input.850396938">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
+		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.release.1518366166.21785232;com.atollic.truestudio.exe.release.1518366166.21785232.;com.atollic.truestudio.exe.release.toolchain.gpp.361142640;com.atollic.truestudio.gpp.input.1827115931">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.atollic.truestudio.mbs.ARMToolsPerProjectProfileCPP"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
 				<buildOutputProvider>
 					<openAction enabled="true" filePath=""/>
@@ -659,7 +659,7 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.debug.1518366166;com.atollic.truestudio.exe.debug.1518366166.303277065;com.atollic.truestudio.exe.debug.toolchain.gcc.393815702;com.atollic.truestudio.gcc.input.1088835115">
+		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.debug.1518366166;com.atollic.truestudio.exe.debug.1518366166.;com.atollic.truestudio.exe.debug.toolchain.gcc.1836874447;com.atollic.truestudio.gcc.input.850396938">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
 				<buildOutputProvider>
@@ -685,8 +685,21 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.release.1518366166.21785232;com.atollic.truestudio.exe.release.1518366166.21785232.;com.atollic.truestudio.exe.release.toolchain.gpp.361142640;com.atollic.truestudio.gpp.input.1827115931">
+		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.release.1518366166;com.atollic.truestudio.exe.release.1518366166.2031504340;com.atollic.truestudio.exe.release.toolchain.gpp.981298185;com.atollic.truestudio.gpp.input.92277952">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.atollic.truestudio.mbs.ARMToolsPerProjectProfileCPP"/>
+			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
+				<buildOutputProvider>
+					<openAction enabled="true" filePath=""/>
+					<parser enabled="true"/>
+				</buildOutputProvider>
+				<scannerInfoProvider id="makefileGenerator">
+					<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true"/>
+					<parser enabled="true"/>
+				</scannerInfoProvider>
+			</profile>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.debug.1518366166;com.atollic.truestudio.exe.debug.1518366166.303277065;com.atollic.truestudio.exe.debug.toolchain.gcc.393815702;com.atollic.truestudio.gcc.input.1088835115">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
 				<buildOutputProvider>
 					<openAction enabled="true" filePath=""/>
@@ -700,19 +713,6 @@
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.release.1518366166.21785232;com.atollic.truestudio.exe.release.1518366166.21785232.;com.atollic.truestudio.exe.release.toolchain.gcc.1935931256;com.atollic.truestudio.gcc.input.705360717">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.atollic.truestudio.mbs.ARMToolsPerProjectProfileC"/>
-			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
-				<buildOutputProvider>
-					<openAction enabled="true" filePath=""/>
-					<parser enabled="true"/>
-				</buildOutputProvider>
-				<scannerInfoProvider id="makefileGenerator">
-					<runAction arguments="-f ${project_name}_scd.mk" command="make" useDefault="true"/>
-					<parser enabled="true"/>
-				</scannerInfoProvider>
-			</profile>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.atollic.truestudio.exe.release.1518366166;com.atollic.truestudio.exe.release.1518366166.2031504340;com.atollic.truestudio.exe.release.toolchain.gpp.981298185;com.atollic.truestudio.gpp.input.92277952">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.atollic.truestudio.mbs.ARMToolsPerProjectProfileCPP"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerFileProfile">
 				<buildOutputProvider>
 					<openAction enabled="true" filePath=""/>

@@ -76,6 +76,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI3_Init(void);
 /* USER CODE BEGIN PFP */
+extern long SOCKETS_Init( void );
 
 /* USER CODE END PFP */
 
@@ -122,6 +123,7 @@ int main(void)
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
 
+  SOCKETS_Init();
   StartApplication();
 
   /* USER CODE END 2 */

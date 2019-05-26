@@ -305,20 +305,25 @@ int _isatty_r(struct _reent *ptr, int fd)
 }
 
 
-#if 0 // not used, untested
+
 /**
-  * @brief
-  * @note
-  * @param  tms: not supported,
-  * @retval 32-bit unsigned value
+  * @brief  Standard C method for accessing process time, or run time.
+  * @note   time.h defines CLOCKS_PER_SEC to be 100, 10mS period. Not accurate, time reported
+  * is actually 1mS period. Consider using configTICK_RATE_HZ instead.
+  * @param  buf process times. Single processor, so only utime (user time) is set
+  * @retval 0 on success
   */
-clock_t _times(struct tms *buf)
+clock_t _times_r(struct _reent *ptr, struct tms *buf)
 {
 	clock_t sysTickCount = xTaskGetTickCount();
-	buf->tms_utime = buf->tms_stime = buf->tms_cutime = buf->tms_cstime = sysTickCount;
-	return sysTickCount;
+	buf->tms_utime = sysTickCount;
+	buf->tms_stime = 0;
+	buf->tms_cutime = 0;
+	buf->tms_cstime = 0;
+
+	return 0;
 }
-#endif
+
 
 
 /**

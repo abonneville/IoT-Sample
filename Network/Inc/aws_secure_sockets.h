@@ -43,11 +43,11 @@
 #ifndef _AWS_SECURE_SOCKETS_H_
 #define _AWS_SECURE_SOCKETS_H_
 
-/*
- #ifdef __cplusplus
- *  extern "C" {
- #endif
- */
+
+#ifdef __cplusplus
+  extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
 #include "aws_secure_sockets_config.h"
@@ -500,10 +500,10 @@ uint32_t SOCKETS_GetHostByName( const char * pcHostName );
 
 #endif /* socketsconfigBYTE_ORDER. */
 
-/*
- #ifdef __cplusplus
- *  }
- #endif
- */
+
+#ifdef __cplusplus
+  }
+#endif
+
 
 #endif /* _AWS_SECURE_SOCKETS_H_ */
