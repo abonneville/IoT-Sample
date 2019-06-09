@@ -54,6 +54,11 @@ namespace enl
     };
 
 
+    enum class Type
+    {
+        Tcp, ///< TCP protocol
+        Udp  ///< UDP protocol
+    };
 
 
 class SocketImpl

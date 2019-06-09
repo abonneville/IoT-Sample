@@ -539,7 +539,8 @@ Socket_t SOCKETS_Socket( int32_t lDomain,
 
     /* Ensure that only supported values are supplied. */
     configASSERT( lDomain == SOCKETS_AF_INET );
-    configASSERT( ( lType == SOCKETS_SOCK_STREAM && lProtocol == SOCKETS_IPPROTO_TCP ) );
+    configASSERT( ( lType == SOCKETS_SOCK_STREAM && lProtocol == SOCKETS_IPPROTO_TCP )
+    				|| ( lType == SOCKETS_SOCK_DGRAM && lProtocol == SOCKETS_IPPROTO_UDP ) );
 
     /* Try to get a free socket. */
     ulSocketNumber = prvGetFreeSocket();
@@ -548,7 +549,14 @@ Socket_t SOCKETS_Socket( int32_t lDomain,
     if( ulSocketNumber != ( uint32_t ) SOCKETS_INVALID_SOCKET )
     {
         /* Store the socket type. */
-        xSockets[ ulSocketNumber ].xSocketType = ES_WIFI_TCP_CONNECTION;
+    	if ( lType == SOCKETS_SOCK_STREAM )
+    	{
+    		xSockets[ ulSocketNumber ].xSocketType = ES_WIFI_TCP_CONNECTION;
+    	}
+    	else
+    	{
+    		xSockets[ ulSocketNumber ].xSocketType = ES_WIFI_UDP_CONNECTION;
+    	}
 
         /* Initialize all the members to sane values. */
         xSockets[ ulSocketNumber ].ulFlags = 0;
@@ -671,7 +679,7 @@ int32_t SOCKETS_Connect( Socket_t xSocket,
                 memcpy( &( xWiFiConnection.RemoteIP ),
                         &( pxAddress->ulAddress ),
                         sizeof( xWiFiConnection.RemoteIP ) );
-                xWiFiConnection.LocalPort = 0;
+                xWiFiConnection.LocalPort = SOCKETS_ntohs( pxAddress->usPort ); /* WiFi Module expects the port number in host byte order. */
                 xWiFiConnection.Name = NULL;
 
                 /* Start the client connection. */
@@ -1188,3 +1196,36 @@ BaseType_t SOCKETS_Init( void )
     return pdPASS;
 }
 /*-----------------------------------------------------------*/
+
+
+void SOCKETS_GetRemoteData(Socket_t xSocket, uint8_t *remoteIp, uint16_t *remotePort)
+{
+
+    uint32_t ulSocketNumber = ( uint32_t ) xSocket; /*lint !e923 cast is needed for portability. */
+
+    if ((remoteIp == NULL) || (remotePort == NULL)) {
+      return;
+    }
+
+    /* Ensure that a valid socket was passed. */
+    if( prvIsValidSocket( ulSocketNumber ) == pdTRUE )
+    {
+
+        /* Try to acquire the semaphore. */
+        if( xSemaphoreTake( xWiFiModule.xSemaphoreHandle, stsecuresocketsFIVE_MILLISECONDS ) == pdTRUE )
+        {
+
+        	ES_WIFI_Transport_t wifiTransport = {};
+        	ES_WIFI_GetTrSettings( &(xWiFiModule.xWifiObject), ulSocketNumber, &wifiTransport );
+
+        	*remotePort = wifiTransport.Remote_Port;
+        	for (int i = 0; i < 4; i++)
+            {
+            	remoteIp[i] = wifiTransport.Remote_IP_Addr[i];
+            }
+
+            /* Return the semaphore. */
+            ( void ) xSemaphoreGive( xWiFiModule.xSemaphoreHandle );
+        }
+    }
+}

@@ -988,9 +988,9 @@ ES_WIFI_Status_t  ES_WIFI_ListAccessPoints(ES_WIFIObject_t *Obj, ES_WIFI_APs_t *
   uint8_t version[4] = { 0 };
   LOCK_WIFI();
 
-  sprintf((char*)Obj->CmdData, Obj->FW_Rev);
+  sprintf((char*)Obj->CmdData, (char *)Obj->FW_Rev);
 
-  AT_ParseFWRev(Obj->CmdData, version);
+  AT_ParseFWRev((char *)Obj->CmdData, version);
 
   if (ReverseByteOrder32bit(version) >= UPDATED_SCAN_PARAMETERS_FW_REV)
   {
@@ -1591,7 +1591,7 @@ ES_WIFI_Status_t ES_WIFI_StartClientConnection(ES_WIFIObject_t *Obj, ES_WIFI_Con
     ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
   }
 
-  if ((ret == ES_WIFI_STATUS_OK) && ((conn->Type == ES_WIFI_TCP_CONNECTION) || (conn->Type == ES_WIFI_TCP_SSL_CONNECTION)))
+  if (ret == ES_WIFI_STATUS_OK)
   {
     sprintf((char*)Obj->CmdData,"P3=%d.%d.%d.%d\r", conn->RemoteIP[0],conn->RemoteIP[1],
             conn->RemoteIP[2],conn->RemoteIP[3]);
@@ -2420,3 +2420,51 @@ ES_WIFI_Status_t  ES_WIFI_StoreKey( ES_WIFIObject_t *Obj,
   return ret;
 }
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
+
+ES_WIFI_Status_t ES_WIFI_GetTrSettings(ES_WIFIObject_t *Obj, uint8_t Socket, ES_WIFI_Transport_t *pTrSettings)
+{
+  ES_WIFI_Status_t ret;
+
+  sprintf((char*)Obj->CmdData,"P0=%d\r", Socket);
+  ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+
+  if (ret == ES_WIFI_STATUS_OK)
+  {
+	  memset(Obj->CmdData,0,sizeof(Obj->CmdData));
+	  sprintf((char*)Obj->CmdData,"P?\r");
+	  ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+
+	  if (ret == ES_WIFI_STATUS_OK) {
+		  AT_ParseTransportSettings((char *) Obj->CmdData, pTrSettings);
+	  }
+
+  }
+  return ret;
+}
+
+
+/*
+* @brief Return the RSSI of the associate Access point
+* @param Obj contains buffer space for accessing WiFi module
+* @param rssi location to store RSSI value
+* retval ES_WIFI_STATUS_OK on success, error code on failure
+*/
+ES_WIFI_Status_t ES_WIFI_GetRSSI(ES_WIFIObject_t *Obj, int32_t * rssi)
+{
+	ES_WIFI_Status_t ret;
+
+	memset(Obj->CmdData,0,sizeof(Obj->CmdData));
+	sprintf((char*)Obj->CmdData,"CR\r");
+	ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+
+	if (ret == ES_WIFI_STATUS_OK) {
+		*rssi = ParseNumber((char *) &Obj->CmdData[2], NULL);
+	}
+
+	return ret;
+}
+
+
+
+

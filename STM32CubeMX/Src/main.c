@@ -66,6 +66,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+RNG_HandleTypeDef hrng;
+
 SPI_HandleTypeDef hspi3;
 
 /* USER CODE BEGIN PV */
@@ -75,8 +77,8 @@ SPI_HandleTypeDef hspi3;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI3_Init(void);
+static void MX_RNG_Init(void);
 /* USER CODE BEGIN PFP */
-extern long SOCKETS_Init( void );
 
 /* USER CODE END PFP */
 
@@ -121,9 +123,8 @@ int main(void)
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
   MX_SPI3_Init();
+  MX_RNG_Init();
   /* USER CODE BEGIN 2 */
-
-  SOCKETS_Init();
   StartApplication();
 
   /* USER CODE END 2 */
@@ -179,8 +180,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_RNG;
   PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLLSAI1;
+  PeriphClkInit.RngClockSelection = RCC_RNGCLKSOURCE_PLLSAI1;
   PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_MSI;
   PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
   PeriphClkInit.PLLSAI1.PLLSAI1N = 24;
@@ -198,6 +200,32 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief RNG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RNG_Init(void)
+{
+
+  /* USER CODE BEGIN RNG_Init 0 */
+
+  /* USER CODE END RNG_Init 0 */
+
+  /* USER CODE BEGIN RNG_Init 1 */
+
+  /* USER CODE END RNG_Init 1 */
+  hrng.Instance = RNG;
+  if (HAL_RNG_Init(&hrng) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RNG_Init 2 */
+
+  /* USER CODE END RNG_Init 2 */
+
 }
 
 /**

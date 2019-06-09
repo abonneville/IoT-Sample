@@ -1,5 +1,5 @@
 /*
- * Amazon FreeRTOS
+ * Amazon FreeRTOS V1.4.7
  * Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -24,41 +24,21 @@
  */
 
 /**
- * @file aws_secure_sockets_config_defaults.h
- * @brief Ensures that the required sockets configuration options are supplied
- * and the optional ones are set to sane values if the user does not supply.
+ * @file aws_bufferpool_config.h
+ * @brief Buffer Pool config options.
  */
 
-#ifndef AWS_INC_SECURE_SOCKETS_CONFIG_DEFAULTS_H_
-#define AWS_INC_SECURE_SOCKETS_CONFIG_DEFAULTS_H_
+#ifndef _AWS_BUFFER_POOL_CONFIG_H_
+#define _AWS_BUFFER_POOL_CONFIG_H_
 
 /**
- * @brief Byte order of the target MCU must be defined.
- *
- * Valid values are pdLITTLE_ENDIAN and pdBIG_ENDIAN.
+ * @brief The number of buffers in the static buffer pool.
  */
-#ifndef socketsconfigBYTE_ORDER
-    #error "socketsconfigBYTE_ORDER must be defined."
-#endif
+#define bufferpoolconfigNUM_BUFFERS    ( 8 )
 
 /**
- * @brief Default socket send timeout.
- *
- * The user can change the send timeout for a socket using the SOCKETS_SetSockOpt API
- * with the SOCKETS_SO_SNDTIMEO option.
+ * @brief The size of each buffer in the static buffer pool.
  */
-#ifndef socketsconfigDEFAULT_SEND_TIMEOUT
-    #define socketsconfigDEFAULT_SEND_TIMEOUT    ( 10000 )
-#endif
+#define bufferpoolconfigBUFFER_SIZE    ( 1024 + 128 )
 
-/**
- * @brief Default socket receive timeout.
- *
- * The user can change the receive timeout for a socket using the SOCKETS_SetSockOpt API
- * with the SOCKETS_SO_RCVTIMEO option.
- */
-#ifndef socketsconfigDEFAULT_RECV_TIMEOUT
-    #define socketsconfigDEFAULT_RECV_TIMEOUT    ( 10000 )
-#endif
-
-#endif /* AWS_INC_SECURE_SOCKETS_CONFIG_DEFAULTS_H_ */
+#endif /* _AWS_BUFFER_POOL_CONFIG_H_ */

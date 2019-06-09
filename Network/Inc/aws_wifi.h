@@ -39,6 +39,7 @@
 
 /* Wi-Fi configuration includes. */
 #include "aws_wifi_config.h"
+#include "es_wifi.h"
 
 #ifdef __cplusplus
 
@@ -67,7 +68,8 @@ typedef enum
     eWiFiSecurityWEP,         /**< WEP Security. */
     eWiFiSecurityWPA,         /**< WPA Security. */
     eWiFiSecurityWPA2,        /**< WPA2 Security. */
-    eWiFiSecurityNotSupported /**< Unknown Security. */
+    eWiFiSecurityAuto,
+    eWiFiSecurityNotSupported = -1 /**< Unknown Security. */
 } WIFISecurity_t;
 
 /**
@@ -478,6 +480,10 @@ WIFIReturnCode_t WIFI_GetPMMode( WIFIPMMode_t * pxPMModeType,
  * @return pdTRUE if the link is up, pdFalse otherwise.
  */
 BaseType_t WIFI_IsConnected( void );
+
+WIFIReturnCode_t WIFI_GetFirmwareVersion( uint8_t * pucBuffer );
+WIFIReturnCode_t WIFI_GetNetworkSettings( ES_WIFI_Network_t * networkSettings );
+WIFIReturnCode_t WIFI_GetRSSI(int32_t * rssi);
 
 #ifdef __cplusplus
 }

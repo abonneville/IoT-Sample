@@ -109,6 +109,10 @@ static ES_WIFI_SecurityType_t prvConvertSecurityFromAbstractedToST( WIFISecurity
             xConvertedSecurityType = ES_WIFI_SEC_WPA2;
             break;
 
+        case eWiFiSecurityAuto:
+            xConvertedSecurityType = ES_WIFI_SEC_WPA_WPA2;
+            break;
+
         case eWiFiSecurityNotSupported:
             xConvertedSecurityType = ES_WIFI_SEC_UNKNOWN;
             break;
@@ -146,6 +150,10 @@ static WIFISecurity_t prvConvertSecurityFromSTToAbstracted( ES_WIFI_SecurityType
 
         case ES_WIFI_SEC_WPA2:
             xConvertedSecurityType = eWiFiSecurityWPA2;
+            break;
+
+        case ES_WIFI_SEC_WPA_WPA2:
+            xConvertedSecurityType = eWiFiSecurityAuto;
             break;
 
         default:
@@ -394,7 +402,7 @@ WIFIReturnCode_t WIFI_Ping( uint8_t * pucIPAddr,
 
     if( ( NULL == pucIPAddr ) || ( 0 == usCount ) )
     {
-        return eWiFiFailure;
+        return eWiFiNotSupported;
     }
 
     /* Try to acquire the semaphore. */
@@ -532,6 +540,8 @@ WIFIReturnCode_t WIFI_Scan( WIFIScanResult_t * pxBuffer,
                 memcpy( pxBuffer[ x ].ucBSSID,
                 		xESWifiAPs.AP[ x ].MAC,
                         wificonfigMAX_BSSID_LEN );
+
+                pxBuffer[ x ].cChannel = xESWifiAPs.AP[ x ].Channel;
             }
 
             xRetVal = eWiFiSuccess;
@@ -776,3 +786,56 @@ WIFIReturnCode_t WIFI_GetFirmwareVersion( uint8_t * pucBuffer )
     return xRetVal;
 }
 /*-----------------------------------------------------------*/
+
+WIFIReturnCode_t WIFI_GetNetworkSettings( ES_WIFI_Network_t * networkSettings )
+{
+    WIFIReturnCode_t xRetVal = eWiFiFailure;
+
+    configASSERT( networkSettings != NULL );
+
+    /* Try to acquire the semaphore. */
+    if( xSemaphoreTake( xWiFiModule.xSemaphoreHandle, xSemaphoreWaitTicks ) == pdTRUE )
+    {
+		/* We are accessing a cached copy for network settings, which only change when
+		 * a station connection is first made or disconnected. This cached copy is updated
+		 * on both events.
+		 */
+		memcpy( networkSettings, &xWiFiModule.xWifiObject.NetSettings, sizeof( ES_WIFI_Network_t ));
+		xRetVal = eWiFiSuccess;
+
+        /* Return the semaphore. */
+        xSemaphoreGive( xWiFiModule.xSemaphoreHandle );
+    }
+    else
+    {
+        xRetVal = eWiFiTimeout;
+    }
+
+    return xRetVal;
+}
+
+
+
+WIFIReturnCode_t WIFI_GetRSSI(int32_t * rssi)
+{
+    WIFIReturnCode_t xRetVal = eWiFiFailure;
+
+    /* Try to acquire the semaphore. */
+    if( xSemaphoreTake( xWiFiModule.xSemaphoreHandle, xSemaphoreWaitTicks ) == pdTRUE )
+    {
+        if( ES_WIFI_GetRSSI( &xWiFiModule.xWifiObject, rssi ) == ES_WIFI_STATUS_OK )
+        {
+            xRetVal = eWiFiSuccess;
+        }
+
+        /* Return the semaphore. */
+        xSemaphoreGive( xWiFiModule.xSemaphoreHandle );
+    }
+    else
+    {
+        xRetVal = eWiFiTimeout;
+    }
+
+    return xRetVal;
+}
+

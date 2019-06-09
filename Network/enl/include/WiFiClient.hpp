@@ -33,6 +33,7 @@ class WiFiClient
 {
 public:
 	WiFiClient();
+	WiFiClient(Type type);
 	WiFiClient(SocketHandle sock);
 	// TODO WiFiClient(const WiFiClient & ) = delete;
 
@@ -41,22 +42,31 @@ public:
 	bool connect(const char *host, uint16_t port);
 	size_t write(uint8_t);
 	size_t write(const uint8_t *buf, size_t size);
-	size_t write(const char *buffer, size_t size)
+	size_t write(const char    *buf, size_t size)
 		{
-			return write( (const uint8_t *)buffer, size );
+			return write( (const uint8_t *)buf, size );
 		};
 	int32_t available();
 	int read();
 	size_t read(uint8_t *buf, size_t size);
+	size_t read(char    *buf, size_t size)
+    {
+      return read((uint8_t *)buf, size);
+    };
+
 	int peek();
 	void flush();
 	void stop();
 	bool connected();
 	operator bool();
 
+	uint32_t remoteIP();
+	uint16_t remotePort();
+
 protected:
 
 private:
+	Type _type;
 	SocketHandle _socket;
 	int32_t socketState;
 };

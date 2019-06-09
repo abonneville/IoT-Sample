@@ -120,11 +120,15 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Drivers/STM32L4xx_HAL_Driver/Inc/Legacy}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Drivers/CMSIS/Device/ST/STM32L4xx/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Drivers/CMSIS/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Add-ons/c++/Source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/aws/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/aws/include/private}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/aws/pkcs11/pkcs11}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.cppstandard.570635598" name="C++ standard" superClass="com.atollic.truestudio.gpp.cppstandard" useByScannerDiscovery="false" value="com.atollic.truestudio.gpp.cppstandard.cpp14" valueType="enumerated"/>
@@ -302,11 +306,15 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Drivers/STM32L4xx_HAL_Driver/Inc/Legacy}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Drivers/CMSIS/Device/ST/STM32L4xx/Include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Drivers/CMSIS/Include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Add-ons/c++/Source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/Source/portable/GCC/ARM_CM4F}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/STM32CubeMX/Middlewares/ST/STM32_USB_Device_Library/Core/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/aws/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/aws/include/private}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/aws/pkcs11/pkcs11}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/HAL-Extension/Inc}&quot;"/>
 								</option>
 								<option id="com.atollic.truestudio.gpp.cppstandard.953178544" name="C++ standard" superClass="com.atollic.truestudio.gpp.cppstandard" useByScannerDiscovery="false" value="com.atollic.truestudio.gpp.cppstandard.cpp14" valueType="enumerated"/>

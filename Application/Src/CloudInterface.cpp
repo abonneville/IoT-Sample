@@ -20,14 +20,14 @@
  *
  */
 
+#include <cstring>
 
-#include <WiFiClient.hpp>
+#include "WiFiClient.hpp"
 #include "ThreadConfig.hpp"
 #include "UserConfig.hpp"
 #include "CloudInterface.hpp"
-#include "aws_wifi.h"
 
-
+#include "WiFiStation.hpp"
 
 /* Typedef -----------------------------------------------------------*/
 
@@ -36,15 +36,28 @@
 /* Macro -------------------------------------------------------------*/
 
 /* Variables ---------------------------------------------------------*/
-enl::WiFiClient client;
-const char server[] = "www.google.com";
+enl::WiFiStation WiFi;
+enl::WiFiClient client(enl::Type::Udp);
+//const char server[] = "www.google.com";
+//unsigned int localPort = 80;
+
+const char server[] = "0.us.pool.ntp.org";
+unsigned int localPort = 123;      // local port to listen for UDP packets
+
+bool notConnected = true;
+
 static constexpr uint16_t TestBufferSize = 1000;
 uint8_t buf[ TestBufferSize ];
-WIFINetworkParams_t networkParms = {};
+
+
+const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
+char packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 
 
 /* Function prototypes -----------------------------------------------*/
 void httpRequest();
+void sendNTPpacket();
+void parseNTPpacket();
 
 /* External functions ------------------------------------------------*/
 
@@ -69,53 +82,53 @@ void CloudInterface::Run()
 {
 
 	/* Connect to the Internet via WiFi */
-	WIFIReturnCode_t wifiRes;
 	const UserConfig::Wifi_t &wifiConfig = userConfigHandle.GetWifiConfig();
 
-	networkParms.pcPassword = wifiConfig.password.value.data();
-	networkParms.ucPasswordLength = wifiConfig.password.size - 1;
-	networkParms.pcSSID = wifiConfig.ssid.value.data();
-	networkParms.ucSSIDLength = wifiConfig.ssid.size - 1;
-	networkParms.xSecurity = eWiFiSecurityWPA2;
+	WiFi.begin(wifiConfig.ssid.value.data(),
+			   wifiConfig.password.value.data(),
+			   enl::WiFiSecurityType::WPA2);
 
-	wifiRes = WIFI_On();
-	wifiRes = WIFI_ConnectAP(&networkParms);
+	const char *version = WiFi.firmwareVersion();
+	std::printf("\nFirmware: %s\n", version);
 
-	if (WIFI_IsConnected() == 1) {
-		uint8_t ipAddress[4] = { 192, 168, 1, 1};
-		wifiRes = WIFI_Ping(ipAddress, 3, 10);
-		if (wifiRes == eWiFiSuccess) {
+	enl::WiFiSecurityType type = WiFi.encryptionType();
+	std::printf("Security: %d\n", (int)type);
+
+//	uint8_t count = WiFi.scanNetworks();
+//	std::printf("Scan count: %u\n", count);
+
+
+	if (WiFi.status() == enl::WiFiStatus::WL_CONNECTED) {
+		enl::IPAddress ip { 192, 168, 1, 1};
+		enl::PingStatus status = WiFi.ping(ip);
+		if (status == enl::PingStatus::WL_PING_SUCCESS) {
 			std::printf("\nSuccess: IP ping\n");
+			notConnected = true;
 		}
 		else
 		{
 			std::printf("\nFail: IP ping\n");
+			while (1);
 		}
 	}
 
 	size_t length = 0;
 	while (true) {
 
-		/* Emulate a stalled server by alternating requests */
-		httpRequest();
+		sendNTPpacket();
 
 		Thread::Delay(1000);
 
-		uint32_t count = 0;
-		length = 1;
-		while ( length > 0 )
+		length = client.read(packetBuffer, NTP_PACKET_SIZE);
+		if ( length > 0 )
 		{
-			length = client.read(buf, TestBufferSize - 1);
-			buf[length] = '\0';         // End off string required by Serial.print
-//				std::printf("%s", (char*)buf);
-			count += length;
-		}
+			parseNTPpacket();
 
-		std::printf("Packet size: %lu\n", count);
-		if ( count == 0 )
+		}
+		else if ( length == 0 )
 		{
 			int32_t status = client.status();
-			std::printf("Connection status: %ld\n", status );
+			std::printf("\n **** Connection status: %ld ****\n", status );
 		}
 
 		Thread::Delay(5000);
@@ -151,9 +164,79 @@ void httpRequest() {
 	} else {
 		// if you can't make a connection:
 		std::printf("Connection failed");
-		std::printf("...reconnecting now!\n");
-		WIFI_ConnectAP(&networkParms);
-
 	}
 }
 
+void sendNTPpacket()
+{
+	if ( notConnected )
+	{
+		notConnected = false;
+
+		std::printf("Connecting to server...");
+		if ( client.connect(server, localPort) )
+		{
+			uint32_t ipAddress = client.remoteIP();
+			std::printf("ok\n");
+			std::printf("Server IP: ");
+			std::printf("%lu.", (( ipAddress >> 24 ) & 0xFF) );
+			std::printf("%lu.", (( ipAddress >> 16 ) & 0xFF) );
+			std::printf("%lu.", (( ipAddress >>  8 ) & 0xFF) );
+			std::printf("%lu\n", (( ipAddress >>  0 ) & 0xFF) );
+		}
+		else
+		{
+			std::printf("fail\n");
+			while(1);
+		}
+	}
+
+
+	// Initialize values needed to form NTP request
+	// (see URL above for details on the packets)
+	std::memset(packetBuffer, 0, NTP_PACKET_SIZE);
+
+	packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+	packetBuffer[1] = 0;     // Stratum, or type of clock
+	packetBuffer[2] = 6;     // Polling Interval
+	packetBuffer[3] = 0xEC;  // Peer Clock Precision
+	// 8 bytes of zero for Root Delay & Root Dispersion
+	packetBuffer[12]  = 49;
+	packetBuffer[13]  = 0x4E;
+	packetBuffer[14]  = 49;
+	packetBuffer[15]  = 52;
+
+	// all NTP fields have been given values, now
+	// you can send a packet requesting a timestamp:
+
+	client.write(packetBuffer, NTP_PACKET_SIZE);
+}
+
+void parseNTPpacket()
+{
+	//the timestamp starts at byte 40 of the received packet and is four bytes,
+	// or two words, long. First, esxtract the two words:
+	uint32_t secsSince1900 = 0;
+	secsSince1900  = ( (uint32_t)packetBuffer[40] << 24);
+	secsSince1900 |= ( (uint32_t)packetBuffer[41] << 16);
+	secsSince1900 |= ( (uint32_t)packetBuffer[42] <<  8);
+	secsSince1900 |= ( (uint32_t)packetBuffer[43] <<  0);
+
+    // this is NTP time (seconds since Jan 1 1900):
+//	std::printf("Seconds since Jan 1, 1900 = %lu\n", secsSince1900);
+
+	// now convert NTP time into everyday time (since Jan 1, 1970):
+	static constexpr uint32_t seventyYears = 2208988800UL;
+	uint32_t epoch = secsSince1900 - seventyYears;
+//	std::printf("Unix time = %lu\n", epoch);
+
+	//Display hour, minute, second
+	static constexpr uint32_t SecsPerDay = 86400;
+	static constexpr uint32_t SecsPerHour = 3600;
+	static constexpr uint32_t SecsPerMin = 60;
+
+	std::printf("UTC time = ");
+	std::printf("%lu:", (epoch % SecsPerDay ) / SecsPerHour );
+	std::printf("%lu:", (epoch % SecsPerHour) / SecsPerMin );
+	std::printf("%lu\n", (epoch % SecsPerMin ) );
+}

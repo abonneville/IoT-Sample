@@ -46,17 +46,34 @@ namespace enl
  * @retval None
  */
 WiFiClient::WiFiClient() :
+		_type(Type::Tcp),
 		_socket(SOCKETS_INVALID_SOCKET),
 		socketState(SOCKETS_ENOTCONN)
 {
 }
 
+
 /**
  * @brief  Constructor
+ * @param  type sets protocol for communicating
+ * @retval None
+ */
+WiFiClient::WiFiClient(Type type) :
+		_type(type),
+		_socket(SOCKETS_INVALID_SOCKET),
+		socketState(SOCKETS_ENOTCONN)
+{
+}
+
+
+/**
+ * @brief  Constructor
+ * @note   Used by WiFiServer when new client connects
  * @param  sock: socket to use
  * @retval None
  */
 WiFiClient::WiFiClient(Socket_t sock) :
+		_type(Type::Tcp),
 		_socket(sock),
 		socketState(SOCKETS_ENOTCONN)
 {
@@ -70,21 +87,30 @@ WiFiClient::WiFiClient(Socket_t sock) :
 */
 bool WiFiClient::connect(uint32_t ip, uint16_t port)
 {
-  Socket_t sock;
-  if (_socket == SOCKETS_INVALID_SOCKET) {
-	  sock = SOCKETS_Socket( SOCKETS_AF_INET, SOCKETS_SOCK_STREAM, SOCKETS_IPPROTO_TCP );
-    if (sock != SOCKETS_INVALID_SOCKET) {
-      _socket = sock;
-    }
-  }
-  if (_socket != SOCKETS_INVALID_SOCKET) {
-	// set connection parameter and start client
-	SocketsSockaddr_t hostAddress = { 0 };
-	hostAddress.usPort = SOCKETS_htons(port);
-	hostAddress.ulAddress = ip;
-	hostAddress.ucSocketDomain = SOCKETS_AF_INET;
-	socketState = SOCKETS_Connect( _socket, &hostAddress, sizeof(hostAddress) );
-  }
+
+	if (_socket == SOCKETS_INVALID_SOCKET)
+	{
+		if ( _type == Type::Tcp )
+		{
+			_socket = SOCKETS_Socket( SOCKETS_AF_INET, SOCKETS_SOCK_STREAM, SOCKETS_IPPROTO_TCP );
+		}
+		else
+		{
+			_socket = SOCKETS_Socket( SOCKETS_AF_INET, SOCKETS_SOCK_DGRAM, SOCKETS_IPPROTO_UDP );
+		}
+	}
+/**
+ * TODO: add unit test and implement fix for when ip = 0.0.0.0, treat as invalid and do not connect
+ */
+	if (_socket != SOCKETS_INVALID_SOCKET)
+	{
+		// set connection parameter and start client
+		SocketsSockaddr_t hostAddress = { 0 };
+		hostAddress.usPort = SOCKETS_htons(port);
+		hostAddress.ulAddress = ip;
+		hostAddress.ucSocketDomain = SOCKETS_AF_INET;
+		socketState = SOCKETS_Connect( _socket, &hostAddress, sizeof(hostAddress) );
+	}
 
   return ( socketState == SOCKETS_ERROR_NONE);
 }
@@ -97,10 +123,10 @@ bool WiFiClient::connect(uint32_t ip, uint16_t port)
  */
 bool WiFiClient::connect(const char *host, uint16_t port)
 {
-  uint32_t ip; // IP address of the host
+	uint32_t ip; // IP address of the host
 
-  ip = SOCKETS_GetHostByName( host );
-  return connect(ip, port);
+	ip = SOCKETS_GetHostByName( host );
+	return connect(ip, port);
 }
 
 /**
@@ -130,7 +156,7 @@ size_t WiFiClient::write(const uint8_t *buf, size_t size)
  */
 size_t WiFiClient::write(uint8_t b)
 {
-  return write(&b, 1);
+	return write(&b, 1);
 }
 
 /**
@@ -188,11 +214,11 @@ size_t WiFiClient::read(uint8_t *buf, size_t size)
  */
 int WiFiClient::peek()
 {
-  /***************************************************************************/
-  /*                               NOT SUPPORTED                             */
-  /* This functionality doesn't exist in the current device.                 */
-  /***************************************************************************/
-  return 0;
+	/***************************************************************************/
+	/*                               NOT SUPPORTED                             */
+	/* This functionality doesn't exist in the current device.                 */
+	/***************************************************************************/
+	return 0;
 }
 
 /**
@@ -249,8 +275,39 @@ Status WiFiClient::status()
   */
 WiFiClient::operator bool()
 {
-  return _socket != SOCKETS_INVALID_SOCKET;
+	return _socket != SOCKETS_INVALID_SOCKET;
 }
 
+
+/**
+ * @brief  Gets the IP address of the remote connection.
+ * @note   Intended to be used when "client" object is obtained from a server
+ * @retval The IP address of the host currently connected to.
+ */
+uint32_t WiFiClient::remoteIP()
+{
+	uint32_t retVal = 0;
+	uint8_t address[4] = {};
+	uint16_t port = 0;
+	SOCKETS_GetRemoteData(_socket, address, &port);
+
+	retVal  = address[0] << 24;
+	retVal |= address[1] << 16;
+	retVal |= address[2] <<  8;
+	retVal |= address[3];
+	return retVal;
+}
+
+
+/**
+ * @brief  Gets the port of the remote connection.
+ * @note   Intended to be used when "client" object is obtained from a server
+ * @retval The port of the host currently connected to.
+ */
+uint16_t WiFiClient::remotePort()
+{
+
+	return 0;
+}
 
 } /* namespace enl */

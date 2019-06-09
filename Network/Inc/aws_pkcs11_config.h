@@ -1,6 +1,6 @@
 /*
- * Amazon FreeRTOS Secure Socket V1.0.0
- * Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * Amazon FreeRTOS V1.4.7
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -23,12 +23,16 @@
  * http://www.FreeRTOS.org
  */
 
+/**
+ * @file aws_pkcs11_config.h
+ * @brief PCKS#11 config options.
+ */
 
-#ifndef _AWS_LIB_INIT_H_
-#define _AWS_LIB_INIT_H_
 
-#include "FreeRTOS.h"
+#ifndef _AWS_PKCS11_CONFIG_H_
+#define _AWS_PKCS11_CONFIG_H_
 
-#define lib_initDECLARE_LIB_INIT( f )    extern BaseType_t f( void )
+/* A non-standard version of C_INITIALIZE should be used by this port. */
+/* #define pkcs11configC_INITIALIZE_ALT */
 
-#endif /* _AWS_LIB_INIT_H_ */
+#endif /* _AWS_PKCS11_CONFIG_H_ include guard. */

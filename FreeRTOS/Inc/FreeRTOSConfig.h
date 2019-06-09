@@ -33,7 +33,7 @@
 #define configCPU_CLOCK_HZ                      ( SystemCoreClock )
 #define configTICK_RATE_HZ                      ((TickType_t)1000)
 #define configMAX_PRIORITIES                    7
-#define configMINIMAL_STACK_SIZE                ((uint16_t)128)
+#define configMINIMAL_STACK_SIZE                ((uint16_t) 256 )
 #define configMAX_TASK_NAME_LEN                 16
 #define configUSE_16_BIT_TICKS                  0
 #define configIDLE_SHOULD_YIELD                 1
@@ -121,6 +121,18 @@ standard names. */
 /* Define to trap errors during development. */
 //#define configASSERT( ( x ) ) if( ( x ) == 0 ) vAssertCalled( __FILE__, __LINE__ )
 #define configASSERT( x ) if( ( x ) == 0 ) { portDISABLE_INTERRUPTS(); for( ;; ); }
+
+/* Map the logging task's printf to the board specific output function. */
+#define configPRINT_STRING( x )    printf( x );
+
+/* Sets the length of the buffers into which logging messages are written - so
+ * also defines the maximum length of each log message. */
+#define configLOGGING_MAX_MESSAGE_LENGTH            128
+
+/* Set to 1 to prepend each log message with a message number, the task name,
+ * and a time stamp. */
+#define configLOGGING_INCLUDE_TIME_AND_TASK_NAME    1
+
 
 /* FreeRTOS MPU specific definitions. */
 #define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0

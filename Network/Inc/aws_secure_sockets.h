@@ -50,9 +50,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "FreeRTOS.h"
 #include "aws_secure_sockets_config.h"
-#include "aws_secure_sockets_config_defaults.h"
-#include "aws_lib_init.h"
+//#include "aws_secure_sockets_config_defaults.h"
+//#include "aws_lib_init.h"
 
 /**
  * @brief The socket type.
@@ -204,7 +205,8 @@ typedef struct SocketsSockaddr
  * * @ref pdPASS if everything succeeds
  * * @ref pdFAIL otherwise.
  */
-lib_initDECLARE_LIB_INIT( SOCKETS_Init );
+//lib_initDECLARE_LIB_INIT( SOCKETS_Init );
+BaseType_t SOCKETS_Init( void );
 
 /**
  * @brief Creates a TCP socket.
@@ -424,6 +426,13 @@ int32_t SOCKETS_SetSockOpt( Socket_t xSocket,
 uint32_t SOCKETS_GetHostByName( const char * pcHostName );
 
 
+/**
+ * @brief Obtain the host IP and port number connected to.
+ * @param xSocket socket descriptor
+ * @param remoteIp location to store IP address
+ * @param remotePort location to store port number
+ */
+void SOCKETS_GetRemoteData(Socket_t xSocket, uint8_t *remoteIp, uint16_t *remotePort);
 
 /**
  * @brief Convert an unsigned thirty-two-bit value from host endianness to network

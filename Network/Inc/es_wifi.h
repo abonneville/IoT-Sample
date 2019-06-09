@@ -113,7 +113,7 @@ typedef enum {
   ES_WIFI_SEC_WPA2 = 0x03,          /*!< Wi-Fi Protected Access 2 */
   ES_WIFI_SEC_WPA_WPA2= 0x04,       /*!< Wi-Fi Protected Access with both modes */
   ES_WIFI_SEC_WPA2_TKIP= 0x05,      /*!< Wi-Fi Protected Access with both modes */
-  ES_WIFI_SEC_UNKNOWN = 0xFF,       /*!< Wi-Fi Unknown Security mode */
+  ES_WIFI_SEC_UNKNOWN = -1       /*!< Wi-Fi Unknown Security mode */
 } ES_WIFI_SecurityType_t;
 
 typedef enum {
@@ -288,7 +288,8 @@ ES_WIFI_Status_t  ES_WIFI_GetRTOSRev(ES_WIFIObject_t *Obj, uint8_t *RTOSRev);
 ES_WIFI_Status_t  ES_WIFI_GetProductName(ES_WIFIObject_t *Obj, uint8_t *productName);
 ES_WIFI_Status_t  ES_WIFI_GetAPIRev(ES_WIFIObject_t *Obj, uint8_t *APIRev);
 ES_WIFI_Status_t  ES_WIFI_GetStackRev(ES_WIFIObject_t *Obj, uint8_t *StackRev);
-
+ES_WIFI_Status_t  ES_WIFI_GetTrSettings(ES_WIFIObject_t *Obj, uint8_t Socket, ES_WIFI_Transport_t *pTrSettings);
+ES_WIFI_Status_t  ES_WIFI_GetRSSI(ES_WIFIObject_t *Obj, int32_t * rssi);
 
 ES_WIFI_Status_t  ES_WIFI_SetMACAddress(ES_WIFIObject_t *Obj, uint8_t *mac);
 ES_WIFI_Status_t  ES_WIFI_ResetToFactoryDefault(ES_WIFIObject_t *Obj);

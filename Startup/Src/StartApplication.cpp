@@ -20,16 +20,30 @@
  *
  */
 
-#include <StartApplication.hpp>
+#include "StartApplication.hpp"
 #include "UserConfig.hpp"
 #include "CommandInterface.hpp"
 #include "ResponseInterface.hpp"
 #include "CloudInterface.hpp"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "aws_logging_task.h"
+
+#ifdef __cplusplus
+}
+#endif /* extern "C" */
+
+
 
 /* Typedef -----------------------------------------------------------*/
 
 /* Define ------------------------------------------------------------*/
+#define mainLOGGING_TASK_PRIORITY           (UBaseType_t)( configMAX_PRIORITIES - 1 )
+#define mainLOGGING_TASK_STACK_SIZE         ( configMINIMAL_STACK_SIZE * 4 )
+#define mainLOGGING_MESSAGE_QUEUE_LENGTH    (UBaseType_t)( 15 )
 
 /* Macro -------------------------------------------------------------*/
 
@@ -54,12 +68,14 @@ static CloudInterface cloudThread(userConfig);
 
 /* Function prototypes -----------------------------------------------*/
 
+
 /* External functions ------------------------------------------------*/
 
 
 /**
-  * @brief  The application entry point to C++
-  * @note	This method is intended to be called after platform initialization is completed
+  * @brief  The application entry point to C++. Initializes middleware, and launches
+  * 		kernel/application layer.
+  * @note	This method is intended to be called after platform/HAL initialization is completed
   * 		in main()
   */
 void StartApplication(void)
@@ -69,6 +85,12 @@ void StartApplication(void)
 	 * any C/C++ threads here. If objects need to be declared here, then change the code
 	 * within prvPortStartFirstTask() to retain the MSP value.
 	 */
+
+	xLoggingTaskInitialize( mainLOGGING_TASK_STACK_SIZE,
+	                        mainLOGGING_TASK_PRIORITY,
+	                        mainLOGGING_MESSAGE_QUEUE_LENGTH );
+
+
 	cpp_freertos::Thread::StartScheduler();
 
 	/* Infinite loop */
@@ -78,4 +100,49 @@ void StartApplication(void)
 }
 
 
+/**
+ * @brief  Setup network interface
+ */
+#if 0
+static void NetworkInit()
+{
+    WIFIReturnCode_t xWifiStatus;
 
+    /* Turn on the WiFi before key provisioning. This is needed because
+     * if we want to use offload SSL, device certificate and key is stored
+     * on the WiFi module during key provisioning which requires the WiFi
+     * module to be initialized. */
+    xWifiStatus = WIFI_On();
+
+    if( xWifiStatus == eWiFiSuccess )
+    {
+        configPRINTF( ( "WiFi module initialized.\r\n" ) );
+
+        /* A simple example to demonstrate key and certificate provisioning in
+         * microcontroller flash using PKCS#11 interface. This should be replaced
+         * by production ready key provisioning mechanism. */
+        vDevModeKeyProvisioning();
+
+        if( SYSTEM_Init() == pdPASS )
+        {
+            /* Connect to the WiFi before running the demos */
+//        	WifiConnect();
+
+            #ifdef USE_OFFLOAD_SSL
+                /* Check if WiFi firmware needs to be updated. */
+                prvCheckWiFiFirmwareVersion();
+            #endif /* USE_OFFLOAD_SSL */
+
+            /* Start demos. */
+//            DEMO_RUNNER_RunDemos();
+        }
+    }
+    else
+    {
+        configPRINTF( ( "WiFi module failed to initialize.\r\n" ) );
+
+        /* Stop here if we fail to initialize WiFi. */
+        configASSERT( xWifiStatus == eWiFiSuccess );
+    }
+}
+#endif
