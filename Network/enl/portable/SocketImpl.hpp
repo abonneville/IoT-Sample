@@ -25,23 +25,13 @@
 #ifndef PORTABLE_SOCKETIMPL_HPP_
 #define PORTABLE_SOCKETIMPL_HPP_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdint.h>
-
-#include "aws_secure_sockets.h"
-
-#ifdef __cplusplus
-}
-#endif /* extern "C" */
-
 
 
 namespace enl
 {
 
-	typedef Socket_t SocketHandle;
+//	typedef Socket_t SocketHandle;
 
     enum Status
     {

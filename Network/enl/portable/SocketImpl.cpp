@@ -20,6 +20,7 @@
  *
  */
 
+#include "aws_secure_sockets.h"
 #include "SocketImpl.hpp"
 
 /* Typedef -----------------------------------------------------------*/

@@ -22,6 +22,8 @@
 
 #include "WiFiClient.hpp"
 
+#include "aws_secure_sockets.h"
+
 /* Typedef -----------------------------------------------------------*/
 
 /* Define ------------------------------------------------------------*/
@@ -41,14 +43,48 @@ namespace enl
 
 
 /**
+ * Pimpl idiom is being used to keep vendor/driver types out of the header, and avoid
+ * header dependency.
+ */
+class WiFiClient::impl
+{
+public:
+	impl() :
+		_type(Type::Tcp),
+		_socket(SOCKETS_INVALID_SOCKET),
+		socketState(SOCKETS_ENOTCONN)
+	{};
+
+	impl(Type type) :
+		_type(type),
+		_socket(SOCKETS_INVALID_SOCKET),
+		socketState(SOCKETS_ENOTCONN)
+	{};
+
+	impl(intptr_t sock) :
+		_type(Type::Tcp),
+		_socket( (Socket_t)sock ),
+		socketState(SOCKETS_ENOTCONN)
+	{};
+
+	Type _type;
+	Socket_t _socket;
+	int32_t socketState;
+};
+
+
+WiFiClient::~WiFiClient()
+{
+}
+
+
+/**
  * @brief  Constructor
  * @param  None
  * @retval None
  */
 WiFiClient::WiFiClient() :
-		_type(Type::Tcp),
-		_socket(SOCKETS_INVALID_SOCKET),
-		socketState(SOCKETS_ENOTCONN)
+		pimpl{ { new impl } }
 {
 }
 
@@ -59,9 +95,7 @@ WiFiClient::WiFiClient() :
  * @retval None
  */
 WiFiClient::WiFiClient(Type type) :
-		_type(type),
-		_socket(SOCKETS_INVALID_SOCKET),
-		socketState(SOCKETS_ENOTCONN)
+		pimpl{ { new impl(type) } }
 {
 }
 
@@ -72,12 +106,11 @@ WiFiClient::WiFiClient(Type type) :
  * @param  sock: socket to use
  * @retval None
  */
-WiFiClient::WiFiClient(Socket_t sock) :
-		_type(Type::Tcp),
-		_socket(sock),
-		socketState(SOCKETS_ENOTCONN)
+WiFiClient::WiFiClient(intptr_t sock) :
+		pimpl{ { new impl(sock) } }
 {
 }
+
 
 /**
 * @brief  Connect to the IP address and port specified in the constructor
@@ -88,31 +121,31 @@ WiFiClient::WiFiClient(Socket_t sock) :
 bool WiFiClient::connect(uint32_t ip, uint16_t port)
 {
 
-	if (_socket == SOCKETS_INVALID_SOCKET)
+	if (pimpl->_socket == SOCKETS_INVALID_SOCKET)
 	{
-		if ( _type == Type::Tcp )
+		if ( pimpl->_type == Type::Tcp )
 		{
-			_socket = SOCKETS_Socket( SOCKETS_AF_INET, SOCKETS_SOCK_STREAM, SOCKETS_IPPROTO_TCP );
+			pimpl->_socket = SOCKETS_Socket( SOCKETS_AF_INET, SOCKETS_SOCK_STREAM, SOCKETS_IPPROTO_TCP );
 		}
 		else
 		{
-			_socket = SOCKETS_Socket( SOCKETS_AF_INET, SOCKETS_SOCK_DGRAM, SOCKETS_IPPROTO_UDP );
+			pimpl->_socket = SOCKETS_Socket( SOCKETS_AF_INET, SOCKETS_SOCK_DGRAM, SOCKETS_IPPROTO_UDP );
 		}
 	}
 /**
  * TODO: add unit test and implement fix for when ip = 0.0.0.0, treat as invalid and do not connect
  */
-	if (_socket != SOCKETS_INVALID_SOCKET)
+	if (pimpl->_socket != SOCKETS_INVALID_SOCKET)
 	{
 		// set connection parameter and start client
 		SocketsSockaddr_t hostAddress = { 0 };
 		hostAddress.usPort = SOCKETS_htons(port);
 		hostAddress.ulAddress = ip;
 		hostAddress.ucSocketDomain = SOCKETS_AF_INET;
-		socketState = SOCKETS_Connect( _socket, &hostAddress, sizeof(hostAddress) );
+		pimpl->socketState = SOCKETS_Connect( pimpl->_socket, &hostAddress, sizeof(hostAddress) );
 	}
 
-  return ( socketState == SOCKETS_ERROR_NONE);
+  return ( pimpl->socketState == SOCKETS_ERROR_NONE);
 }
 
 /**
@@ -137,15 +170,15 @@ bool WiFiClient::connect(const char *host, uint16_t port)
  */
 size_t WiFiClient::write(const uint8_t *buf, size_t size)
 {
-	int32_t SentLen = SOCKETS_Send(_socket, buf, size, 0);
+	int32_t SentLen = SOCKETS_Send(pimpl->_socket, buf, size, 0);
 
 	if ( SentLen < 0 )
 	{
-		socketState = SentLen;
+		pimpl->socketState = SentLen;
 		return 0;
 	}
 
-	socketState = SOCKETS_ERROR_NONE;
+	pimpl->socketState = SOCKETS_ERROR_NONE;
 	return SentLen;
 }
 
@@ -194,15 +227,15 @@ int WiFiClient::read()
 size_t WiFiClient::read(uint8_t *buf, size_t size)
 {
 
-	int32_t RecLen = SOCKETS_Recv( _socket, buf, size, 0);
+	int32_t RecLen = SOCKETS_Recv( pimpl->_socket, buf, size, 0);
 
 	if ( RecLen < 0)
 	{
-		socketState = RecLen;
+		pimpl->socketState = RecLen;
 		return 0;
 	}
 
-	socketState = SOCKETS_ERROR_NONE;
+	pimpl->socketState = SOCKETS_ERROR_NONE;
 	return RecLen;
 }
 
@@ -242,10 +275,10 @@ void WiFiClient::flush()
  */
 void WiFiClient::stop()
 {
-	SOCKETS_Close( _socket );
+	SOCKETS_Close( pimpl->_socket );
 
-	socketState = SOCKETS_ENOTCONN;
-	_socket = SOCKETS_INVALID_SOCKET;
+	pimpl->socketState = SOCKETS_ENOTCONN;
+	pimpl->_socket = SOCKETS_INVALID_SOCKET;
 }
 
 /**
@@ -255,7 +288,7 @@ void WiFiClient::stop()
  */
 bool WiFiClient::connected()
 {
-	return ( SocketImpl::ConnectionStatus( socketState ) == Status::Ready );
+	return ( SocketImpl::ConnectionStatus( pimpl->socketState ) == Status::Ready );
 }
 
 /**
@@ -265,7 +298,7 @@ bool WiFiClient::connected()
  */
 Status WiFiClient::status()
 {
-	return SocketImpl::ConnectionStatus( socketState );
+	return SocketImpl::ConnectionStatus( pimpl->socketState );
 }
 
 /**
@@ -275,7 +308,7 @@ Status WiFiClient::status()
   */
 WiFiClient::operator bool()
 {
-	return _socket != SOCKETS_INVALID_SOCKET;
+	return pimpl->_socket != SOCKETS_INVALID_SOCKET;
 }
 
 
@@ -289,7 +322,7 @@ uint32_t WiFiClient::remoteIP()
 	uint32_t retVal = 0;
 	uint8_t address[4] = {};
 	uint16_t port = 0;
-	SOCKETS_GetRemoteData(_socket, address, &port);
+	SOCKETS_GetRemoteData(pimpl->_socket, address, &port);
 
 	retVal  = address[0] << 24;
 	retVal |= address[1] << 16;

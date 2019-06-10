@@ -66,14 +66,21 @@ size_t safe_strlen(const char *str, size_t max_len);
 class WiFiStation::impl
 {
 public:
-	WIFIScanResult_t scanBuffer[ ES_WIFI_MAX_DETECTED_AP ] = {};
-    uint8_t scanCount = 0;
-    WiFiStatus wifiStatus = WiFiStatus::WL_NO_WIFI;
+	impl() :
+		scanBuffer{ {} },
+		scanCount(0),
+		wifiStatus(WiFiStatus::WL_NO_WIFI),
+		networkSettings { {} }
+	{};
+
+	WIFIScanResult_t scanBuffer[ ES_WIFI_MAX_DETECTED_AP ];
+	uint8_t scanCount;
+    WiFiStatus wifiStatus;
 
     /* networkSettings is a cached copy, so only access values that are static between station
      * connect and station disconnect.
      */
-	ES_WIFI_Network_t networkSettings = {};
+	ES_WIFI_Network_t networkSettings;
 };
 
 

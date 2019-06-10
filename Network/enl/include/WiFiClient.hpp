@@ -26,6 +26,8 @@
 #define INCLUDE_WIFICLIENT_HPP_
 
 #include "SocketImpl.hpp"
+#include <stdint.h>
+#include <memory>
 
 namespace enl
 {
@@ -34,7 +36,8 @@ class WiFiClient
 public:
 	WiFiClient();
 	WiFiClient(Type type);
-	WiFiClient(SocketHandle sock);
+	WiFiClient(intptr_t sock);
+	~WiFiClient();
 	// TODO WiFiClient(const WiFiClient & ) = delete;
 
 	Status status();
@@ -66,9 +69,9 @@ public:
 protected:
 
 private:
-	Type _type;
-	SocketHandle _socket;
-	int32_t socketState;
+	class impl;
+	std::unique_ptr<impl> pimpl;
+
 };
 
 } /* namespace enl */
