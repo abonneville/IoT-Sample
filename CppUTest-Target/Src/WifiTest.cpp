@@ -394,6 +394,17 @@ TEST(WiFiClient, writeToLarge)
 
 }
 
+
+TEST(WiFiClient, tcp_remoteData)
+{
+	/* TCP server IP is obtained using a URL, the IP is different from time to time.
+	 */
+	CHECK( 80 == tcpClient.remotePort() );
+	CHECK( enl::IP_Any != tcpClient.remoteIP() );
+}
+
+
+
 /**
  * UDP Specific testing
  */
@@ -430,17 +441,9 @@ TEST(WiFiClient, udp_fullDatagram)
 
 TEST(WiFiClient, udp_remoteData)
 {
-	/**
-	 * TODO: The implementation of this feature is being delayed until IPAddress abstraction and
-	 * pimpl idiom are implemented in the client.
-	 */
-#if 0
-	sendNTPpacket();
-
 	/* NTP server IP is obtained from a large pool, the IP is different every time the
 	 * pool is accessed.
 	 */
 	CHECK( 123 == udpClient.remotePort() );
 	CHECK( enl::IP_Any != udpClient.remoteIP() );
-#endif
 }

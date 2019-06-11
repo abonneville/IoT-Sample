@@ -1198,13 +1198,13 @@ BaseType_t SOCKETS_Init( void )
 /*-----------------------------------------------------------*/
 
 
-void SOCKETS_GetRemoteData(Socket_t xSocket, uint8_t *remoteIp, uint16_t *remotePort)
+int32_t SOCKETS_GetTransportSettings(Socket_t xSocket, ES_WIFI_Transport_t *pTrSettings)
 {
-
+	int32_t lRetVal = SOCKETS_ERROR_NONE;
     uint32_t ulSocketNumber = ( uint32_t ) xSocket; /*lint !e923 cast is needed for portability. */
 
-    if ((remoteIp == NULL) || (remotePort == NULL)) {
-      return;
+    if (pTrSettings == NULL) {
+      return SOCKETS_EINVAL;
     }
 
     /* Ensure that a valid socket was passed. */
@@ -1215,17 +1215,19 @@ void SOCKETS_GetRemoteData(Socket_t xSocket, uint8_t *remoteIp, uint16_t *remote
         if( xSemaphoreTake( xWiFiModule.xSemaphoreHandle, stsecuresocketsFIVE_MILLISECONDS ) == pdTRUE )
         {
 
-        	ES_WIFI_Transport_t wifiTransport = {};
-        	ES_WIFI_GetTrSettings( &(xWiFiModule.xWifiObject), ulSocketNumber, &wifiTransport );
+        	ES_WIFI_Status_t status = ES_WIFI_GetTrSettings( &(xWiFiModule.xWifiObject), ulSocketNumber, pTrSettings );
 
-        	*remotePort = wifiTransport.Remote_Port;
-        	for (int i = 0; i < 4; i++)
-            {
-            	remoteIp[i] = wifiTransport.Remote_IP_Addr[i];
-            }
+        	if ( status != ES_WIFI_STATUS_OK )
+        	{
+        		lRetVal = SOCKETS_SOCKET_ERROR;
+        	}
 
             /* Return the semaphore. */
             ( void ) xSemaphoreGive( xWiFiModule.xSemaphoreHandle );
         }
     }
+
+    return lRetVal;
 }
+
+

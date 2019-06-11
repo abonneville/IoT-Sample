@@ -89,7 +89,7 @@ public:
  * @brief  Initialize access to the WiFi module
  */
 WiFiStation::WiFiStation()
-	: pimpl{ new impl {} }
+	: pimpl{ std::make_unique<impl>() }
 {
 	/* Note: the init() method is not invoked here, because the WiFi driver requires that
 	 * the RTOS be operational/scheduling. If its invoked here, and the object was not

@@ -176,13 +176,15 @@ void sendNTPpacket()
 		std::printf("Connecting to server...");
 		if ( client.connect(server, localPort) )
 		{
-			uint32_t ipAddress = client.remoteIP();
+			enl::IPAddress ipAddress = client.remoteIP();
 			std::printf("ok\n");
 			std::printf("Server IP: ");
-			std::printf("%lu.", (( ipAddress >> 24 ) & 0xFF) );
-			std::printf("%lu.", (( ipAddress >> 16 ) & 0xFF) );
-			std::printf("%lu.", (( ipAddress >>  8 ) & 0xFF) );
-			std::printf("%lu\n", (( ipAddress >>  0 ) & 0xFF) );
+			std::printf("%u.", ipAddress[0] );
+			std::printf("%u.", ipAddress[1] );
+			std::printf("%u.", ipAddress[2] );
+			std::printf("%u\n", ipAddress[3] );
+
+			std::printf("Server port: %u\n", client.remotePort() );
 		}
 		else
 		{

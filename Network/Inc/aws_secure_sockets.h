@@ -52,6 +52,7 @@
 #include <stddef.h>
 #include "FreeRTOS.h"
 #include "aws_secure_sockets_config.h"
+#include "es_wifi.h"
 //#include "aws_secure_sockets_config_defaults.h"
 //#include "aws_lib_init.h"
 
@@ -427,12 +428,11 @@ uint32_t SOCKETS_GetHostByName( const char * pcHostName );
 
 
 /**
- * @brief Obtain the host IP and port number connected to.
- * @param xSocket socket descriptor
- * @param remoteIp location to store IP address
- * @param remotePort location to store port number
+ * @brief Obtain the connection settings to remote host.
+ * @param[in] xSocket socket descriptor
+ * @param[out] pTrSettings location to store transport settings
  */
-void SOCKETS_GetRemoteData(Socket_t xSocket, uint8_t *remoteIp, uint16_t *remotePort);
+int32_t SOCKETS_GetTransportSettings(Socket_t xSocket, ES_WIFI_Transport_t *pTrSettings);
 
 /**
  * @brief Convert an unsigned thirty-two-bit value from host endianness to network

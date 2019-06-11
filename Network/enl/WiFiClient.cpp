@@ -52,24 +52,28 @@ public:
 	impl() :
 		_type(Type::Tcp),
 		_socket(SOCKETS_INVALID_SOCKET),
-		socketState(SOCKETS_ENOTCONN)
+		socketState(SOCKETS_ENOTCONN),
+		transportSettings {}
 	{};
 
 	impl(Type type) :
 		_type(type),
 		_socket(SOCKETS_INVALID_SOCKET),
-		socketState(SOCKETS_ENOTCONN)
+		socketState(SOCKETS_ENOTCONN),
+		transportSettings {}
 	{};
 
 	impl(intptr_t sock) :
 		_type(Type::Tcp),
 		_socket( (Socket_t)sock ),
-		socketState(SOCKETS_ENOTCONN)
+		socketState(SOCKETS_ENOTCONN),
+		transportSettings {}
 	{};
 
 	Type _type;
 	Socket_t _socket;
 	int32_t socketState;
+	ES_WIFI_Transport_t transportSettings;
 };
 
 
@@ -84,7 +88,7 @@ WiFiClient::~WiFiClient()
  * @retval None
  */
 WiFiClient::WiFiClient() :
-		pimpl{ { new impl } }
+		pimpl{ std::make_unique<impl>() }
 {
 }
 
@@ -95,7 +99,7 @@ WiFiClient::WiFiClient() :
  * @retval None
  */
 WiFiClient::WiFiClient(Type type) :
-		pimpl{ { new impl(type) } }
+		pimpl{ std::make_unique<impl>(type) }
 {
 }
 
@@ -107,7 +111,7 @@ WiFiClient::WiFiClient(Type type) :
  * @retval None
  */
 WiFiClient::WiFiClient(intptr_t sock) :
-		pimpl{ { new impl(sock) } }
+		pimpl{ std::make_unique<impl>(sock) }
 {
 }
 
@@ -118,7 +122,7 @@ WiFiClient::WiFiClient(intptr_t sock) :
 * @param  port : port to which to send the packet
 * @retval True if the connection succeeds, false if not.
 */
-bool WiFiClient::connect(uint32_t ip, uint16_t port)
+bool WiFiClient::connect(IPAddress & ip, uint16_t port)
 {
 
 	if (pimpl->_socket == SOCKETS_INVALID_SOCKET)
@@ -143,6 +147,11 @@ bool WiFiClient::connect(uint32_t ip, uint16_t port)
 		hostAddress.ulAddress = ip;
 		hostAddress.ucSocketDomain = SOCKETS_AF_INET;
 		pimpl->socketState = SOCKETS_Connect( pimpl->_socket, &hostAddress, sizeof(hostAddress) );
+		if ( pimpl->socketState == SOCKETS_ERROR_NONE )
+		{
+			/* Valid connection, capture settings */
+			SOCKETS_GetTransportSettings(pimpl->_socket, &pimpl->transportSettings);
+		}
 	}
 
   return ( pimpl->socketState == SOCKETS_ERROR_NONE);
@@ -156,7 +165,7 @@ bool WiFiClient::connect(uint32_t ip, uint16_t port)
  */
 bool WiFiClient::connect(const char *host, uint16_t port)
 {
-	uint32_t ip; // IP address of the host
+	IPAddress ip; // IP address of the host
 
 	ip = SOCKETS_GetHostByName( host );
 	return connect(ip, port);
@@ -279,6 +288,7 @@ void WiFiClient::stop()
 
 	pimpl->socketState = SOCKETS_ENOTCONN;
 	pimpl->_socket = SOCKETS_INVALID_SOCKET;
+	std::memset( &pimpl->transportSettings, 0, sizeof( pimpl->transportSettings ) );
 }
 
 /**
@@ -315,32 +325,24 @@ WiFiClient::operator bool()
 /**
  * @brief  Gets the IP address of the remote connection.
  * @note   Intended to be used when "client" object is obtained from a server
- * @retval The IP address of the host currently connected to.
+ * @retval The host IP address currently connected to.
  */
-uint32_t WiFiClient::remoteIP()
+IPAddress WiFiClient::remoteIP()
 {
-	uint32_t retVal = 0;
-	uint8_t address[4] = {};
-	uint16_t port = 0;
-	SOCKETS_GetRemoteData(pimpl->_socket, address, &port);
-
-	retVal  = address[0] << 24;
-	retVal |= address[1] << 16;
-	retVal |= address[2] <<  8;
-	retVal |= address[3];
-	return retVal;
+	IPAddress ip { pimpl->transportSettings.Remote_IP_Addr };
+	return ip;
 }
 
 
 /**
  * @brief  Gets the port of the remote connection.
  * @note   Intended to be used when "client" object is obtained from a server
- * @retval The port of the host currently connected to.
+ * @retval The host port number currently connected to.
  */
 uint16_t WiFiClient::remotePort()
 {
 
-	return 0;
+	return pimpl->transportSettings.Remote_Port;
 }
 
 } /* namespace enl */

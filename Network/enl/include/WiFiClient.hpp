@@ -25,6 +25,7 @@
 #ifndef INCLUDE_WIFICLIENT_HPP_
 #define INCLUDE_WIFICLIENT_HPP_
 
+#include "NetworkAddress.hpp"
 #include "SocketImpl.hpp"
 #include <stdint.h>
 #include <memory>
@@ -41,7 +42,7 @@ public:
 	// TODO WiFiClient(const WiFiClient & ) = delete;
 
 	Status status();
-	bool connect(uint32_t ip, uint16_t port);
+	bool connect(IPAddress & ip, uint16_t port);
 	bool connect(const char *host, uint16_t port);
 	size_t write(uint8_t);
 	size_t write(const uint8_t *buf, size_t size);
@@ -63,7 +64,7 @@ public:
 	bool connected();
 	operator bool();
 
-	uint32_t remoteIP();
+	IPAddress remoteIP();
 	uint16_t remotePort();
 
 protected:
