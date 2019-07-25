@@ -32,7 +32,6 @@
 extern "C" {
 #endif
 
-#include "aws_dev_mode_key_provisioning.h" /* TODO: delete */
 #include "aws_system_init.h"
 
 #ifdef __cplusplus
@@ -194,13 +193,6 @@ WiFiStatus WiFiStation::begin(const char *ssid, const char *passphrase, WiFiSecu
 
 	if ( pimpl->wifiStatus != WiFiStatus::WL_NO_WIFI )
 	{
-        /* A simple example to demonstrate key and certificate provisioning in
-         * microcontroller flash using PKCS#11 interface. This should be replaced
-         * by production ready key provisioning mechanism. */
-//TODO        vDevModeKeyProvisioning();
-
-
-
 		WIFINetworkParams_t networkParms = {};
 		networkParms.pcPassword = passphrase;
 		networkParms.ucPasswordLength = passLength;

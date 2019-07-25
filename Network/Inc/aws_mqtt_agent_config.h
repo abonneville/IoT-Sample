@@ -84,7 +84,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * @defgroup MQTTTask MQTT task configuration parameters.
  */
 /** @{ */
-#define mqttconfigMQTT_TASK_STACK_DEPTH    ( 2048 )
+#define mqttconfigMQTT_TASK_STACK_DEPTH    ( 1024 )
 #define mqttconfigMQTT_TASK_PRIORITY       ( tskIDLE_PRIORITY )
 /** @} */
 

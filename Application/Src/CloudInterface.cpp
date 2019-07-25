@@ -59,6 +59,10 @@ void httpRequest();
 void sendNTPpacket();
 void parseNTPpacket();
 
+/* TODO: delete after replacing demo */
+extern "C" void vDevModeKeyProvisioning( void );
+extern "C" void vStartMQTTEchoDemo( void );
+
 /* External functions ------------------------------------------------*/
 
 
@@ -87,6 +91,13 @@ void CloudInterface::Run()
 	WiFi.begin(wifiConfig.ssid.value.data(),
 			   wifiConfig.password.value.data(),
 			   enl::WiFiSecurityType::WPA2);
+
+    /* A simple example to demonstrate key and certificate provisioning in
+     * microcontroller flash using PKCS#11 interface. This should be replaced
+     * by production ready key provisioning mechanism. */
+    //vDevModeKeyProvisioning();
+	vStartMQTTEchoDemo();
+
 
 	const char *version = WiFi.firmwareVersion();
 	std::printf("\nFirmware: %s\n", version);

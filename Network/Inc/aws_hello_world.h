@@ -23,22 +23,11 @@
  * http://www.FreeRTOS.org
  */
 
-/**
- * @file aws_bufferpool_config.h
- * @brief Buffer Pool config options.
- */
+#ifndef _AWS_HELLO_WORLD_H_
+#define _AWS_HELLO_WORLD_H_
 
-#ifndef _AWS_BUFFER_POOL_CONFIG_H_
-#define _AWS_BUFFER_POOL_CONFIG_H_
+#include "aws_demo.h"
 
-/**
- * @brief The number of buffers in the static buffer pool.
- */
-#define bufferpoolconfigNUM_BUFFERS    ( 6 )
+demoDECLARE_DEMO( vStartMQTTEchoDemo );
 
-/**
- * @brief The size of each buffer in the static buffer pool.
- */
-#define bufferpoolconfigBUFFER_SIZE    ( 1024 + 128 )
-
-#endif /* _AWS_BUFFER_POOL_CONFIG_H_ */
+#endif

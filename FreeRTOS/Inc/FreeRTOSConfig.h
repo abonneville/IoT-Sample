@@ -54,7 +54,7 @@
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
-#define configTOTAL_HEAP_SIZE                   ((size_t)40000)
+#define configTOTAL_HEAP_SIZE                   ( (size_t)(68 * 1024) )
 #define configAPPLICATION_ALLOCATED_HEAP        0
 #define configUSE_HEAP_SCHEME                   4 /* either 1 (only alloc), 2 (alloc/free), 3 (malloc), 4 (coalesc blocks), 5 (multiple blocks) */
 
@@ -121,6 +121,17 @@ standard names. */
 /* Define to trap errors during development. */
 //#define configASSERT( ( x ) ) if( ( x ) == 0 ) vAssertCalled( __FILE__, __LINE__ )
 #define configASSERT( x ) if( ( x ) == 0 ) { portDISABLE_INTERRUPTS(); for( ;; ); }
+
+/* Logging task definitions. */
+void vLoggingPrintf( const char * pcFormat,
+					 ... );
+
+/* Map the FreeRTOS printf() to the logging task printf. */
+#define configPRINTF( X )          vLoggingPrintf X
+
+/* Non-format version print. */
+extern void vLoggingPrint( const char * pcMessage );
+#define configPRINT( X )     vLoggingPrint( X )
 
 /* Map the logging task's printf to the board specific output function. */
 #define configPRINT_STRING( x )    printf( x );

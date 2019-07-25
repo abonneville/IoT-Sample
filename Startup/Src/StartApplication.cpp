@@ -42,7 +42,7 @@ extern "C" {
 
 /* Define ------------------------------------------------------------*/
 #define mainLOGGING_TASK_PRIORITY           (UBaseType_t)( configMAX_PRIORITIES - 1 )
-#define mainLOGGING_TASK_STACK_SIZE         ( configMINIMAL_STACK_SIZE * 4 )
+#define mainLOGGING_TASK_STACK_SIZE         ( configMINIMAL_STACK_SIZE * 2 )
 #define mainLOGGING_MESSAGE_QUEUE_LENGTH    (UBaseType_t)( 15 )
 
 /* Macro -------------------------------------------------------------*/

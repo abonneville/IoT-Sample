@@ -45,6 +45,7 @@
 
 /* flash driver includes. */
 #include "flash.h"
+#include "aws_clientcredential_keys.h"
 
 /* WiFi includes. */
 #ifdef USE_OFFLOAD_SSL
@@ -305,6 +306,44 @@ P11KeyConfig_t P11KeyConfig __attribute__( ( section( "UNINIT_FIXED_LOC" ) ) );
  * @return The object handle if successful.
  * eInvalidHandle = 0 if unsuccessful.
  */
+#if 1
+CK_OBJECT_HANDLE PKCS11_PAL_SaveObject( CK_ATTRIBUTE_PTR pxLabel,
+										uint8_t * pucData,
+										uint32_t ulDataSize )
+
+{
+	CK_OBJECT_HANDLE xHandle = eInvalidHandle;
+
+	/*
+	 * write client certificate.
+	 */
+	if( strcmp( pxLabel->pValue,
+				pkcs11configLABEL_DEVICE_CERTIFICATE_FOR_TLS ) == 0 )
+	{
+			xHandle = eAwsDeviceCertificate;
+
+	}
+
+	/*
+	 * write client key.
+	 */
+
+	else if( strcmp( pxLabel->pValue,
+					 pkcs11configLABEL_DEVICE_PRIVATE_KEY_FOR_TLS ) == 0 )
+	{
+			xHandle = eAwsDevicePrivateKey;
+	}
+
+	else if( strcmp( pxLabel->pValue,
+					 pkcs11configLABEL_CODE_VERIFICATION_KEY ) == 0 )
+	{
+			xHandle = eAwsCodeSigningKey;
+	}
+
+	return xHandle;
+}
+
+#else
 CK_OBJECT_HANDLE PKCS11_PAL_SaveObject( CK_ATTRIBUTE_PTR pxLabel,
                                         uint8_t * pucData,
                                         uint32_t ulDataSize )
@@ -437,6 +476,8 @@ CK_OBJECT_HANDLE PKCS11_PAL_SaveObject( CK_ATTRIBUTE_PTR pxLabel,
     return xHandle;
 }
 
+#endif
+
 /*-----------------------------------------------------------*/
 
 /**
@@ -452,7 +493,29 @@ CK_OBJECT_HANDLE PKCS11_PAL_SaveObject( CK_ATTRIBUTE_PTR pxLabel,
  * @return The object handle if operation was successful.
  * Returns eInvalidHandle if unsuccessful.
  */
+#if 1
+CK_OBJECT_HANDLE PKCS11_PAL_FindObject( uint8_t * pLabel,
+                                        uint8_t usLength )
+{
+    CK_OBJECT_HANDLE xHandle = eInvalidHandle;
 
+    if( ( 0 == memcmp( pLabel, pkcs11configLABEL_DEVICE_CERTIFICATE_FOR_TLS, usLength ) ) )
+    {
+        xHandle = eAwsDeviceCertificate;
+    }
+    else if( ( 0 == memcmp( pLabel, pkcs11configLABEL_DEVICE_PRIVATE_KEY_FOR_TLS, usLength ) ) )
+    {
+        xHandle = eAwsDevicePrivateKey;
+    }
+    else if( ( 0 == memcmp( pLabel, pkcs11configLABEL_CODE_VERIFICATION_KEY, usLength ) ) )
+    {
+        xHandle = eAwsCodeSigningKey;
+    }
+
+    return xHandle;
+}
+
+#else
 CK_OBJECT_HANDLE PKCS11_PAL_FindObject( uint8_t * pLabel,
                                         uint8_t usLength )
 {
@@ -476,6 +539,8 @@ CK_OBJECT_HANDLE PKCS11_PAL_FindObject( uint8_t * pLabel,
 
     return xHandle;
 }
+
+#endif
 
 /**
  * @brief Gets the value of an object in storage, by handle.
@@ -501,6 +566,64 @@ CK_OBJECT_HANDLE PKCS11_PAL_FindObject( uint8_t * pLabel,
  * error.
  */
 
+#if 1
+CK_RV PKCS11_PAL_GetObjectValue( CK_OBJECT_HANDLE xHandle,
+                                 uint8_t ** ppucData,
+                                 uint32_t * pulDataSize,
+                                 CK_BBOOL * pIsPrivate )
+
+{
+    CK_RV ulReturn = CKR_OBJECT_HANDLE_INVALID;
+
+    /*
+     * Read client certificate.
+     */
+
+    if( xHandle == eAwsDeviceCertificate )
+    {
+		*ppucData = ( uint8_t * ) clientcredentialCLIENT_CERTIFICATE_PEM;
+		*pulDataSize = clientcredentialCLIENT_CERTIFICATE_LENGTH;
+		*pIsPrivate = CK_FALSE;
+		ulReturn = CKR_OK;
+    }
+
+    /*
+     * Read client key.
+     *
+     * Note: demo uses the same memory location to store either/or private or public key
+     */
+
+    else if( xHandle == eAwsDevicePrivateKey )
+    {
+		*ppucData = ( uint8_t * ) clientcredentialCLIENT_PRIVATE_KEY_PEM;
+		*pulDataSize = clientcredentialCLIENT_PRIVATE_KEY_LENGTH;
+		*pIsPrivate = CK_TRUE;
+		ulReturn = CKR_OK;
+    }
+
+    else if( xHandle == eAwsDevicePublicKey )
+    {
+		*ppucData = ( uint8_t * ) clientcredentialCLIENT_PRIVATE_KEY_PEM;
+		*pulDataSize = clientcredentialCLIENT_PRIVATE_KEY_LENGTH;
+		*pIsPrivate = CK_TRUE;
+		ulReturn = CKR_OK;
+    }
+/*
+    else if( xHandle == eAwsCodeSigningKey )
+    {
+        if( ( P11KeyConfig.ulCodeSignKeyMark & pkcs11OBJECT_PRESENT_MASK ) == pkcs11OBJECT_PRESENT_MAGIC )
+        {
+            *ppucData = P11KeyConfig.cCodeSignKey;
+            *pulDataSize = ( uint32_t ) P11KeyConfig.ulCodeSignKeyMark & pkcs11OBJECT_LENGTH_MASK;
+            *pIsPrivate = CK_FALSE;
+            ulReturn = CKR_OK;
+        }
+    }
+*/
+    return ulReturn;
+}
+
+#else
 CK_RV PKCS11_PAL_GetObjectValue( CK_OBJECT_HANDLE xHandle,
                                  uint8_t ** ppucData,
                                  uint32_t * pulDataSize,
@@ -572,6 +695,8 @@ CK_RV PKCS11_PAL_GetObjectValue( CK_OBJECT_HANDLE xHandle,
 
     return ulReturn;
 }
+
+#endif
 
 /*-----------------------------------------------------------*/
 
