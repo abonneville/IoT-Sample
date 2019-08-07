@@ -1160,6 +1160,11 @@ uint32_t SOCKETS_GetHostByName( const char * pcHostName )
 {
     uint32_t ulIPAddres = 0;
 
+    /* Skip lookup if string is empty */
+    if( pcHostName[0] == 0 ) {
+    	return ulIPAddres;
+    }
+
     /* Try to acquire the semaphore. */
     if( xSemaphoreTake( xWiFiModule.xSemaphoreHandle, xSemaphoreWaitTicks ) == pdTRUE )
     {

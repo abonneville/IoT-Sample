@@ -16,6 +16,7 @@
 
 #include "UserConfig.hpp"
 #include "ResponseInterface.hpp"
+#include "WiFiStation.hpp"
 
 using namespace cpp_freertos;
 using namespace std;
@@ -27,6 +28,7 @@ using namespace std;
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
+extern enl::WiFiStation WiFi;
 
 static void HelpHandler(void);
 static void InvalidHandler(void);
@@ -69,8 +71,8 @@ void ResponseInterface::Run()
 		msgHandle.Dequeue(&msgId);
 
 		switch (msgId) {
-		case RESPONSE_MSG_AWS_STATUS:
-			AwsStatusHandler();
+		case RESPONSE_MSG_CLOUD_STATUS:
+			CloudStatusHandler();
 			break;
 
 		case RESPONSE_MSG_HELP:
@@ -107,14 +109,14 @@ void ResponseInterface::Run()
 
 
 /**
- * @brief Reports the status for the AWS connection.
+ * @brief Reports the status for the cloud connection.
  */
-void ResponseInterface::AwsStatusHandler(void)
+void ResponseInterface::CloudStatusHandler(void)
 {
-	const UserConfig::Aws_t &aws = userConfigHandle.GetAwsConfig();
+	const UserConfig::Cloud_t &cloud = userConfigHandle.GetCloudConfig();
 
-	std::printf("-- AWS Status --\n");
-	std::printf("Key size: %u\n", aws.key.size);
+	std::printf("-- Cloud Status --\n");
+	std::printf("Key size: %u\n", cloud.key.size);
 	std::fflush(stdout);
 }
 
@@ -127,8 +129,11 @@ static void HelpHandler(void)
 	int width = 25;
 
 	std::printf("All commands are case sensitive.\n");
-	std::printf("%-*s %s\n", width, "aws key <field>","Sets the AWS key for connecting to the AWS cloud server.");
-	std::printf("%-*s %s\n", width, "aws status","Reports status for the AWS connection.");
+	std::printf("%-*s %s\n", width, "cloud cert <field>","Sets the device cert for connecting to a cloud server.");
+	std::printf("%-*s %s\n", width, "cloud key <field>","Sets the private key for connecting to a cloud server.");
+	std::printf("%-*s %s\n", width, "cloud name <field>","Sets the thing name for connecting to a cloud server.");
+	std::printf("%-*s %s\n", width, "cloud url <field>","Sets the hostname/endpoint URL for connecting to a cloud server.");
+	std::printf("%-*s %s\n", width, "cloud status","Reports status for the cloud connection.");
 	std::printf("%-*s %s\n", width, "reset","Full processor reset; core and peripherals, as well as external modules.");
 	std::printf("%-*s %s\n", width, "status","TBD");
 	std::printf("%-*s %s\n", width, "version","Report application and library version numbers.");
@@ -162,11 +167,28 @@ static void PromptHandler(void)
 
 
 /**
- * @brief	TBD
+ * @brief  Reports high level system status.
  */
 static void StatusHandler(void)
 {
-	std::printf("Status - not implemented.\n");
+	std::printf("-- System Status --\n");
+
+	if ( WiFi.RSSI() != 0 ) {
+		std::printf("%s, Connected, ", WiFi.SSID() );
+
+		if ( enl::PingStatus::WL_PING_SUCCESS == WiFi.ping("www.google.com", 10) ) {
+			std::printf("Internet Access\n");
+		}
+		else {
+			std::printf("No Internet\n");
+		}
+
+	}
+	else {
+		std::printf("Not connected\n");
+
+	}
+
 	std::fflush(stdout);
 }
 
@@ -198,12 +220,76 @@ static void VersionHandler(void)
  */
 void ResponseInterface::WifiStatusHandler()
 {
-	const UserConfig::Wifi_t &wifi = userConfigHandle.GetWifiConfig();
+	int width = 25;
 
 	std::printf("-- WiFi Status --\n");
-	std::printf("SSID: %s\n", wifi.ssid.value.data() );
-	std::printf("Password: %s\n", wifi.password.value.data() );
-	std::printf("Radio is %s.\n", ( wifi.isWifiOn == true ? "ON" : "OFF") );
+
+	std::printf("%-*s %s\n", width, "SSID", WiFi.SSID() );
+	std::printf("%-*s %li dB\n", width, "Signal strength", WiFi.RSSI() );
+
+	std::printf("%-*s ", width, "Security type" );
+
+	enl::WiFiSecurityType wifiSecurity = WiFi.encryptionType();
+
+	switch (wifiSecurity)
+	{
+	case enl::WiFiSecurityType::Open:
+		std::printf(" Open - no security\n");
+		break;
+
+	case enl::WiFiSecurityType::WEP:
+		std::printf("WEP Security\n");
+		break;
+
+	case enl::WiFiSecurityType::WPA:
+		std::printf("WPA (TKIP) Security\n");
+		break;
+
+	case enl::WiFiSecurityType::WPA2:
+		std::printf("WPA2 (AES/CCMP) Security\n");
+		break;
+
+	case enl::WiFiSecurityType::Auto:
+		std::printf("Auto\n");
+		break;
+
+	default:
+		std::printf("Unknown\n");
+		break;
+	};
+
+	enl::IPAddress ipAddress = WiFi.gatewayIP();
+	std::printf("%-*s ", width, "Gateway IP" );
+	std::printf("%u.", ipAddress[0] );
+	std::printf("%u.", ipAddress[1] );
+	std::printf("%u.", ipAddress[2] );
+	std::printf("%u\n", ipAddress[3] );
+
+	ipAddress = WiFi.subnetMask();
+	std::printf("%-*s ", width, "Subnet mask" );
+	std::printf("%u.", ipAddress[0] );
+	std::printf("%u.", ipAddress[1] );
+	std::printf("%u.", ipAddress[2] );
+	std::printf("%u\n", ipAddress[3] );
+
+	ipAddress = WiFi.localIP();
+	std::printf("%-*s ", width, "Device IP" );
+	std::printf("%u.", ipAddress[0] );
+	std::printf("%u.", ipAddress[1] );
+	std::printf("%u.", ipAddress[2] );
+	std::printf("%u\n", ipAddress[3] );
+
+	enl::MACAddress macAddress = WiFi.macAddress(macAddress);
+	std::printf("%-*s ", width, "Device MAC" );
+	std::printf("%u.", macAddress[0] );
+	std::printf("%u.", macAddress[1] );
+	std::printf("%u.", macAddress[2] );
+	std::printf("%u.", macAddress[3] );
+	std::printf("%u.", macAddress[4] );
+	std::printf("%u\n", macAddress[5] );
+
+	std::printf("%-*s %s\n", width, "Device firmware", WiFi.firmwareVersion() );
+
 	std::fflush(stdout);
 }
 

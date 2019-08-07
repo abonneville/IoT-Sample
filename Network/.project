@@ -26,11 +26,6 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>aws/bufferpool</name>
-			<type>2</type>
-			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/bufferpool</locationURI>
-		</link>
-		<link>
 			<name>aws/crypto</name>
 			<type>2</type>
 			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/crypto</locationURI>

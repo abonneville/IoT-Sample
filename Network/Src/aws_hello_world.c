@@ -71,7 +71,9 @@
 #include "aws_mqtt_agent.h"
 
 /* Credentials includes. */
-#include "aws_clientcredential.h"
+//#include "aws_clientcredential.h"
+#include "UserConfig.h"
+
 
 /* Demo includes. */
 #include "aws_demo_config.h"
@@ -184,9 +186,18 @@ static BaseType_t prvCreateClientAndConnectToBroker( void )
 {
     MQTTAgentReturnCode_t xReturned;
     BaseType_t xReturn = pdFAIL;
+
+    /** Grab a copy of the cloud configuration value(s)
+     */
+    extern struct UserConfig userConfig;
+    UCHandle handle = &userConfig;
+
+    const char * mqttBrokerEndpointurl = NULL;
+    GetCloudEndpointUrl(handle, &mqttBrokerEndpointurl);
+
     MQTTAgentConnectParams_t xConnectParameters =
     {
-        clientcredentialMQTT_BROKER_ENDPOINT, /* The URL of the MQTT broker to connect to. */
+    	mqttBrokerEndpointurl, 				  /* The URL of the MQTT broker to connect to. */
         democonfigMQTT_AGENT_CONNECT_FLAGS,   /* Connection flags. */
         pdFALSE,                              /* Deprecated. */
         clientcredentialMQTT_BROKER_PORT,     /* Port number on which the MQTT broker is listening. Can be overridden by ALPN connection flag. */
@@ -215,7 +226,7 @@ static BaseType_t prvCreateClientAndConnectToBroker( void )
         xConnectParameters.usClientIdLength = ( uint16_t ) strlen( ( const char * ) echoCLIENT_ID );
 
         /* Connect to the broker. */
-        configPRINTF( ( "MQTT echo attempting to connect to %s.\r\n", clientcredentialMQTT_BROKER_ENDPOINT ) );
+        configPRINTF( ( "MQTT echo attempting to connect to %s.\r\n", mqttBrokerEndpointurl ) );
         xReturned = MQTT_AGENT_Connect( xMQTTHandle,
                                         &xConnectParameters,
                                         democonfigMQTT_ECHO_TLS_NEGOTIATION_TIMEOUT );

@@ -1541,16 +1541,50 @@ ES_WIFI_Status_t ES_WIFI_DNS_LookUp(ES_WIFIObject_t *Obj, const char *url, uint8
 {
   ES_WIFI_Status_t ret;
   char *ptr;
-  LOCK_WIFI();  
+  LOCK_WIFI();
 
-  sprintf((char*)Obj->CmdData,"D0=%s\r", url);
+  /* Per user manual, when the ISM43362-M3G-L44 queries the DNS for an IP address, the IP address is
+   * automatically stored as the remote IP address (same as P3 command). However, this side effect
+   * is undesirable (especially during prototyping phase). Therefore, the existing remote IP
+   * address will be saved and then restored.
+   */
+
+  /* Get current remote IP address.
+   *
+   * Note: socket is already set, we just need to get current remote IP address
+   */
+  ES_WIFI_Transport_t TrSettings;
+  memset(Obj->CmdData,0,sizeof(Obj->CmdData));
+  sprintf((char*)Obj->CmdData,"P?\r");
   ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
 
-  if(ret == ES_WIFI_STATUS_OK)
-  {
-    ptr = strtok((char *)Obj->CmdData + 2, "\r");
-    ParseIP(ptr, ipaddress);
+  if (ret == ES_WIFI_STATUS_OK) {
+	  AT_ParseTransportSettings((char *) Obj->CmdData, &TrSettings);
   }
+
+  /* Query DNS for URL's IP address */
+  if (ret == ES_WIFI_STATUS_OK)
+  {
+	  sprintf((char*)Obj->CmdData,"D0=%s\r", url);
+	  ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+
+	  if(ret == ES_WIFI_STATUS_OK)
+	  {
+	    ptr = strtok((char *)Obj->CmdData + 2, "\r");
+	    ParseIP(ptr, ipaddress);
+	  }
+
+  }
+
+  /* Restore remote IP address */
+  if (ret == ES_WIFI_STATUS_OK)
+  {
+    sprintf((char*)Obj->CmdData,"P3=%d.%d.%d.%d\r", TrSettings.Remote_IP_Addr[0],TrSettings.Remote_IP_Addr[1],
+    		TrSettings.Remote_IP_Addr[2],TrSettings.Remote_IP_Addr[3]);
+    ret = AT_ExecuteCommand(Obj, Obj->CmdData, Obj->CmdData);
+  }
+
+
   UNLOCK_WIFI();
   return ret;
 }

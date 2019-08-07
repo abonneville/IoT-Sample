@@ -213,7 +213,7 @@ TEST(wifi, Connect)
 	CHECK( ip[3] != 1 );
 
 	/* Get Device Firmware */
-	const char fwCheck[] { "C3.5.2.3.BETA9" };
+	const char fwCheck[] { "C3.5.2.5.STM" };
 	STRNCMP_EQUAL( fwCheck, WiFi.firmwareVersion(), sizeof(fwCheck) );
 
 
@@ -401,6 +401,16 @@ TEST(WiFiClient, tcp_remoteData)
 	 */
 	CHECK( 80 == tcpClient.remotePort() );
 	CHECK( enl::IP_Any != tcpClient.remoteIP() );
+}
+
+
+TEST(WiFiClient, emptyHostHame)
+{
+	/* AWS implementation causes a hard fault when the host name is an empty string.
+	 * This test will verify fix in place to prevent system crash.
+	 */
+	enl::WiFiClient testClient(enl::Type::Tcp);
+	CHECK( false == testClient.connect("", 80) );
 }
 
 

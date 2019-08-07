@@ -60,10 +60,10 @@ TEST(IPAddress, uint32_t)
 
 	ip3 = 9834u;
 	ip3 = (uint32_t)76;
-	CHECK( ip3[0] == 0 );
+	CHECK( ip3[0] == 76 );
 	CHECK( ip3[1] == 0 );
 	CHECK( ip3[2] == 0 );
-	CHECK( ip3[3] == 76 );
+	CHECK( ip3[3] == 0 );
 	addr = ip3;
 	CHECK ( addr == 76 );
 }

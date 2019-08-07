@@ -74,4 +74,8 @@
 /* Send AWS IoT MQTT traffic encrypted. */
 #define democonfigMQTT_AGENT_CONNECT_FLAGS          	     ( mqttagentREQUIRE_TLS )
 
+/* Port number the MQTT broker is using. */
+#define clientcredentialMQTT_BROKER_PORT             8883
+
+
 #endif /* _AWS_DEMO_CONFIG_H_ */

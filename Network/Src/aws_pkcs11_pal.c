@@ -44,8 +44,10 @@
 #include <string.h>
 
 /* flash driver includes. */
-#include "flash.h"
-#include "aws_clientcredential_keys.h"
+//#include "flash.h"
+//#include "aws_clientcredential_keys.h"
+
+#include "UserConfig.h"
 
 /* WiFi includes. */
 #ifdef USE_OFFLOAD_SSL
@@ -575,39 +577,44 @@ CK_RV PKCS11_PAL_GetObjectValue( CK_OBJECT_HANDLE xHandle,
 {
     CK_RV ulReturn = CKR_OBJECT_HANDLE_INVALID;
 
+    /** Grab a copy of the cloud configuration value(s)
+     */
+    extern struct UserConfig userConfig;
+    UCHandle handle = &userConfig;
+
     /*
      * Read client certificate.
      */
 
     if( xHandle == eAwsDeviceCertificate )
     {
-		*ppucData = ( uint8_t * ) clientcredentialCLIENT_CERTIFICATE_PEM;
-		*pulDataSize = clientcredentialCLIENT_CERTIFICATE_LENGTH;
+        const uint8_t * cert = NULL;
+        const uint16_t * size = NULL;
+        GetCloudCert(handle, &cert, &size);
+
+        *ppucData = (uint8_t *)cert;
+		*pulDataSize = *size;
 		*pIsPrivate = CK_FALSE;
 		ulReturn = CKR_OK;
     }
 
     /*
      * Read client key.
-     *
-     * Note: demo uses the same memory location to store either/or private or public key
      */
 
-    else if( xHandle == eAwsDevicePrivateKey )
+    else if (  ( xHandle == eAwsDevicePrivateKey )
+    	    || ( xHandle == eAwsDevicePublicKey ) )
     {
-		*ppucData = ( uint8_t * ) clientcredentialCLIENT_PRIVATE_KEY_PEM;
-		*pulDataSize = clientcredentialCLIENT_PRIVATE_KEY_LENGTH;
-		*pIsPrivate = CK_TRUE;
+        const uint8_t * key = NULL;
+        const uint16_t * size = NULL;
+        GetCloudKey(handle, &key, &size);
+
+        *ppucData = (uint8_t *)key;
+		*pulDataSize = *size;
+    	*pIsPrivate = CK_TRUE;
 		ulReturn = CKR_OK;
     }
 
-    else if( xHandle == eAwsDevicePublicKey )
-    {
-		*ppucData = ( uint8_t * ) clientcredentialCLIENT_PRIVATE_KEY_PEM;
-		*pulDataSize = clientcredentialCLIENT_PRIVATE_KEY_LENGTH;
-		*pIsPrivate = CK_TRUE;
-		ulReturn = CKR_OK;
-    }
 /*
     else if( xHandle == eAwsCodeSigningKey )
     {

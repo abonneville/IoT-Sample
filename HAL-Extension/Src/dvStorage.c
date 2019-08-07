@@ -33,7 +33,7 @@
 
 /* Define ------------------------------------------------------------*/
 /* Place "storage" at end of on-chip flash memory */
-#define STORAGE_SIZE (FLASH_PAGE_SIZE)
+#define STORAGE_SIZE (3 * FLASH_PAGE_SIZE)
 #define FLASH_USER_START_ADDR   (FLASH_BASE + FLASH_SIZE - STORAGE_SIZE)
 #define FLASH_USER_END_ADDR     (FLASH_USER_START_ADDR + STORAGE_SIZE - 1)
 

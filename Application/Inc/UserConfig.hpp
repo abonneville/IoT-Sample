@@ -32,7 +32,11 @@
 class UserConfig
 {
 	public:
-		typedef std::array<uint8_t, 256> KeyValue_t;
+		typedef std::array<uint8_t, 2048> KeyValue_t;
+		typedef std::array<uint8_t, 2048> CertValue_t;
+		typedef std::array<char, 64> EndpointUrlValue_t;
+		typedef std::array<char, 64> ThingNameValue_t;
+
 		typedef std::array<char, 32> PasswordValue_t;
 		typedef std::array<char, 32> SsidValue_t;
 
@@ -52,8 +56,24 @@ class UserConfig
 		}Key_t;
 
 		typedef struct {
+			CertValue_t value;
+			uint16_t size;
+		}Cert_t;
+
+		typedef struct {
+			EndpointUrlValue_t value;
+		}EndpointUrl_t;
+
+		typedef struct {
+			ThingNameValue_t value;
+		}ThingName_t;
+
+		typedef struct {
 			Key_t key;
-		}Aws_t;
+			Cert_t cert;
+			EndpointUrl_t EndpointUrl;
+			ThingName_t ThingName;
+		}Cloud_t;
 
 		typedef struct {
 			bool isWifiOn;
@@ -64,7 +84,7 @@ class UserConfig
 		typedef struct {
 			uint16_t tableSize;
 			uint16_t tableVersion;
-			Aws_t aws;
+			Cloud_t cloud;
 			Wifi_t wifi;
 			uint32_t checksum;
 		}Config_t;
@@ -80,10 +100,13 @@ class UserConfig
 		 */
 		UserConfig() { GetConfig(&config); };
 
-		const Aws_t & GetAwsConfig() const;
+		const Cloud_t & GetCloudConfig() const;
 		const Wifi_t & GetWifiConfig() const;
 
-		bool SetAwsKey(std::unique_ptr<Key_t> );
+		bool SetCloudKey(std::unique_ptr<Key_t> );
+		bool SetCloudCert(std::unique_ptr<Cert_t> );
+		bool SetCloudEndpointUrl(const EndpointUrlValue_t *);
+		bool SetCloudThingName(const ThingNameValue_t *);
 		bool SetWifiOn(bool );
 		bool SetWifiPassword(const PasswordValue_t *, size_t );
 		bool SetWifiSsid(const SsidValue_t *, size_t );

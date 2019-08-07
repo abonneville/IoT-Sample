@@ -61,10 +61,10 @@ public:
     	typename  = typename std::enable_if< addrSize == 4 && std::is_same<T, uint32_t>::value >::type>
 	explicit NetworkAddress(T addr)
 	{
-		address[0] = (addr >> 24);
-		address[1] = (addr >> 16);
-		address[2] = (addr >>  8);
-		address[3] = (addr >>  0);
+		address[3] = (addr >> 24);
+		address[2] = (addr >> 16);
+		address[1] = (addr >>  8);
+		address[0] = (addr >>  0);
 	}
 
 	template <size_t Tsize = addrSize, /* force dependency on constructor/operator parameter, not class */
@@ -86,10 +86,11 @@ public:
 	operator uint32_t() const
 	{
 		uint32_t retval = 0;
-		retval  = (address[0] << 24);
-		retval |= (address[1] << 16);
-		retval |= (address[2] <<  8);
-		retval |= (address[3] <<  0);
+		retval  = (address[3] << 24);
+		retval |= (address[2] << 16);
+		retval |= (address[1] <<  8);
+		retval |= (address[0] <<  0);
+
 		return retval;
 	}
 
@@ -109,10 +110,11 @@ public:
 										  || (std::is_same<T, unsigned int>::value) )>::type>
 	NetworkAddress & operator=(T addr)
 	{
-		address[0] = (addr >> 24);
-		address[1] = (addr >> 16);
-		address[2] = (addr >>  8);
-		address[3] = (addr >>  0);
+		address[3] = (addr >> 24);
+		address[2] = (addr >> 16);
+		address[1] = (addr >>  8);
+		address[0] = (addr >>  0);
+
 		return *this;
 	}
 

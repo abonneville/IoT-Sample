@@ -46,19 +46,22 @@
 extern class UserConfig userConfig;
 
 static constexpr char cmdPrompt[] = "";
-static constexpr char cmdAws[] = "aws ";
+static constexpr char cmdCloud[] = "cloud ";
 static constexpr char cmdHelp[] = "help";
 static constexpr char cmdReset[] = "reset";
 static constexpr char cmdStatus[] = "status";
 static constexpr char cmdWifi[] = "wifi ";
 static constexpr char cmdVersion[] = "version";
 
+static constexpr char fieldCert[] = "cert";
 static constexpr char fieldKey[] = "key";
+static constexpr char fieldName[] = "name ";
 static constexpr char fieldOff[] = "off";
 static constexpr char fieldOn[] = "on";
 static constexpr char fieldPassword[] = "password ";
 static constexpr char fieldSsid[] = "ssid ";
 static constexpr char fieldStatus[] = "status";
+static constexpr char fieldUrl[] = "url ";
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -109,9 +112,9 @@ void CommandInterface::Run()
     	/* Parse and execute command handler */
     	switch (commandLineBuffer[0]) {
 
-    	case 'a':
-    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdAws)) {
-    			responseId = AwsCmdHandler(commandLineBuffer.cbegin() + sizeof(cmdAws) - 1, lineEnd);
+    	case 'c':
+    		if (ParseCmdWord(commandLineBuffer.cbegin(), cmdCloud)) {
+    			responseId = CloudCmdHandler(commandLineBuffer.cbegin() + sizeof(cmdCloud) - 1, lineEnd);
     		}
     		break;
 
@@ -161,16 +164,8 @@ void CommandInterface::Run()
 		msgHandle.Enqueue(&responseId, (TickType_t)10 );
 
 
-    	// Log any and all error states for future report back to host
+    	// TODO: Log any and all error states for future report back to host
 
-/*
-
-    	// USB enumeration between host and device can/will be delayed on startup, so cout buffer will need
-    	// special handling to establish data stream
-    	if (cout.fail()) {
-    		cout.clear();
-    	}
-*/
 
     }
 
@@ -179,66 +174,96 @@ void CommandInterface::Run()
 
 
 /**
- * @brief	Parse and execute the AWS commands.
+ * @brief	Parse and execute cloud server configuration commands.
  * @param first, last The range of elements to be evaluated for a valid command.
  * @retval  User response message to be sent.
  */
-ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buffer_t::const_iterator last)
+ResponseId_t CommandInterface::CloudCmdHandler(Buffer_t::const_iterator first, Buffer_t::const_iterator last)
 {
-	std::unique_ptr<UserConfig::Key_t> newKey = std::make_unique<UserConfig::Key_t>();
-	Buffer_t::const_iterator lineEnd;
-	size_t lineSize = 0;
-	size_t keySize = 0;
-
 	ResponseId_t responseId = RESPONSE_MSG_INVALID;
 
 	switch (first[0]) {
+	case 'c':
+		if (ParseCmdWordEnd(first, fieldCert)) {
+			/*
+			 * At this point, we have validated the request to store a new certificate. Next we need to poll
+			 * until we get the entire certificate. Certificate length can be 0 up to max length bytes.
+			 */
+			std::unique_ptr<UserConfig::Cert_t> newCert = std::make_unique<UserConfig::Cert_t>();
+
+			newCert->size = RxPEMObject(newCert->value.data(), newCert->value.size() );
+
+			if ( newCert->size > 0 ) {
+				if (userConfigHandle.SetCloudCert(std::move(newCert)) == true) {
+					responseId = RESPONSE_MSG_PROMPT;
+				}
+			}
+
+			return responseId;
+		}
+		break;
+
 	case 'k':
 		if (ParseCmdWordEnd(first, fieldKey)) {
 			/*
 			 * At this point, we have validated the request to store a new key. Next we need to poll
 			 * until we get the entire key. Key length can be 0 up to max length bytes.
 			 */
-			while (keySize < sizeof(UserConfig::Key_t) ){
-				std::fgets(commandLineBuffer.begin(), commandLineBuffer.size(), stdin);
+			std::unique_ptr<UserConfig::Key_t> newKey = std::make_unique<UserConfig::Key_t>();
 
-				lineEnd = std::find(commandLineBuffer.cbegin(), commandLineBuffer.cend(), '\n');
-				if (lineEnd == commandLineBuffer.cend()) {
-					/* invalid contents, missing terminator */
-					keySize = 0;
-					break;
-				}
+			newKey->size = RxPEMObject(newKey->value.data(), newKey->value.size() );
 
-				lineSize = (lineEnd - commandLineBuffer.cbegin());
-				if (lineSize == 0) {
-					/* Transfer complete */
-					break;
-				}
-
-				if ( (keySize + lineSize) <= sizeof(UserConfig::Key_t) ) {
-					std::memcpy(newKey->value.data() + keySize, commandLineBuffer.cbegin(), lineSize);
-					keySize += lineSize;
-				}
-				else {
-					/* Key is to large, discard  */
-					keySize = 0;
-					break;
-				}
-
-			}
-
-			if (keySize > 0) {
-				newKey->size = keySize;
-				if (userConfigHandle.SetAwsKey(std::move(newKey)) == true) {
+			if ( newKey->size > 0 ) {
+				if (userConfigHandle.SetCloudKey(std::move(newKey)) == true) {
 					responseId = RESPONSE_MSG_PROMPT;
 				}
+			}
+
+			return responseId;
+		}
+		break;
+
+	case 'n':
+		if (ParseCmdWord(first, fieldName)) {
+			/* Validate new thing name */
+			UserConfig::ThingNameValue_t *nameBegin = (UserConfig::ThingNameValue_t *)(first + sizeof(fieldName) - 1);
+			UserConfig::ThingNameValue_t *nameEnd = (UserConfig::ThingNameValue_t *)(last - 1);
+			size_t size = (size_t)nameEnd - (size_t)nameBegin;
+
+			if (size > sizeof(UserConfig::ThingNameValue_t)) {
+				/* Discard, thing name is to large */
+				break;
+			}
+
+			/* Save new thing name */
+			if (userConfigHandle.SetCloudThingName(nameBegin) == true) {
+				responseId = RESPONSE_MSG_PROMPT;
 			}
 		}
 		break;
 
 	case 's':
 		if (ParseCmdWordEnd(first, fieldStatus)) {
-			responseId = RESPONSE_MSG_AWS_STATUS;
+			responseId = RESPONSE_MSG_CLOUD_STATUS;
+		}
+		break;
+
+	case 'u':
+		if (ParseCmdWord(first, fieldUrl)) {
+			/* Validate new hostname/endpoint url */
+			UserConfig::EndpointUrlValue_t *urlBegin = (UserConfig::EndpointUrlValue_t *)(first + sizeof(fieldUrl) - 1);
+			UserConfig::EndpointUrlValue_t *urlEnd = (UserConfig::EndpointUrlValue_t *)(last - 1);
+			size_t size = (size_t)urlEnd - (size_t)urlBegin;
+
+			if (size > sizeof(UserConfig::EndpointUrlValue_t)) {
+				/* Discard, thing url is to large */
+				break;
+			}
+
+			/* Save new endpoint url */
+			if (userConfigHandle.SetCloudEndpointUrl(urlBegin) == true) {
+				responseId = RESPONSE_MSG_PROMPT;
+			}
 		}
 		break;
 
@@ -247,95 +272,6 @@ ResponseId_t CommandInterface::AwsCmdHandler(Buffer_t::const_iterator first, Buf
 	}
 
 	return responseId;
-
-#if 0
-	volatile _ssize_t status;
-
-	FILE *handle = std::fopen(Device.storage, "wb");
-
- 	if (handle != nullptr) {
-		Aws_t *old = new(Aws_t);
-		std::memcpy(old->key, config.aws.key, sizeof(config.aws.key));
-		std::memcpy(config.aws.key, "hello", sizeof("hello"));
-		status = std::fwrite(&config, sizeof(Config_t), 1, handle);
-
-		if ( (status != 1) || (std::ferror(handle) == 1) ) {
-			std::memcpy(config.aws.key, old->key, sizeof(config.aws.key));
-		}
-
-		delete(old);
-	}
-
-	std::fclose(handle);
-
-#endif
-
-
-#if 0
-	uint8_t data[] = {5, 4, 3, 2, 1};
-	FILE *handle = std::fopen(Device.storage, "wb");
-	app_SetBuffer(handle);
-
-
-//	status = std::fwrite(data, sizeof(data[0]), 5, handle);
-//	status = std::fwrite(data, sizeof(data[0]), 2049, handle); // 2049 on fwrite, -1 on fflush, __SERR set during fflush
-//	status = std::fwrite(data,            2049,    1, handle); //    1 on fwrite, -1 on fflush, __SERR set during fflush
-	status = std::fwrite(data, sizeof(data[0]), 9999, handle); // 3072 on fwrite,  0 on fflush, __SERR set during fwrite
-	status = std::fflush(handle);
-	status = std::ferror(handle);
-//	std::clearerr(handle);
-	status = std::fclose(handle);
-	errno = errno;
-#endif
-
-#if 0
-	uint8_t test[] = {5, 4, 3, 2, 1};
-	uint8_t data[5] = {};
-	FILE *handle = std::fopen(Device.storage, "wb");
-//	status = std::setvbuf(handle, nullptr, _IONBF, 0);
-//	app_SetBuffer(handle);
-	status = std::fwrite(test, sizeof(test[0]), 1, handle);
-	status = std::fwrite(&test[1], sizeof(test[0]), 4, handle);
-	status = std::fclose(handle);
-
-	handle = std::fopen(Device.storage, "r");
-
-	status = std::fread(data, sizeof(data[0]), 2, handle);
-	status = std::fread(&data[2], sizeof(data[0]), 3, handle);
-
-	status = std::fclose(handle);
-
-	status = std::memcmp(data, test, 5);
-#endif
-
-#if 0
-	uint8_t test[13] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', 0, 0, 0, 0};
-
-	uint32_t result, check;
-	result = crc_mpeg2(&test[0], &test[9]);
-
-	check = result;
-	test[12] = (check      ) & 0xFF;
-	test[11] = (check >>  8) & 0xFF;
-	test[10] = (check >> 16) & 0xFF;
-	test[ 9] = (check >> 24) & 0xFF;
-
-	result = crc_mpeg2(test, &test[13]);
-
-	uint8_t test[17] = {0x00, 0x09, 0xFF , 0xFF, '1', '2', '3', '4', '5', '6', '7', '8', '9', 0 ,0, 0, 0};
-
-	uint32_t result, check;
-	result = crc_mpeg2(&test[0], &test[13]);
-
-	check = result;
-	test[16] = (check      ) & 0xFF;
-	test[15] = (check >>  8) & 0xFF;
-	test[14] = (check >> 16) & 0xFF;
-	test[13] = (check >> 24) & 0xFF;
-
-	result = crc_mpeg2(test, &test[17]);
-#endif
-
 }
 
 
@@ -422,6 +358,65 @@ ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Bu
 	return responseId;
 }
 
+
+/**
+ * @brief	Buffers and handles receiving a PEM object
+ * @param	buffer is the location to hold the PEM message as its received
+ * @param   length is the maximum number of bytes that will fit in buffer
+ * @retval	size of PEM object received, in bytes
+ */
+size_t CommandInterface::RxPEMObject(uint8_t *buffer, size_t length)
+{
+	Buffer_t::iterator lineEnd;
+	size_t lineSize = 0;
+	size_t pemSize = 0;
+
+	while (pemSize < length ){
+		std::fgets(commandLineBuffer.begin(), commandLineBuffer.size(), stdin);
+
+		lineEnd = std::find(commandLineBuffer.begin(), commandLineBuffer.end(), '\n');
+		if (lineEnd == commandLineBuffer.cend()) {
+			/* invalid contents, missing terminator */
+			pemSize = 0;
+			break;
+		}
+
+		lineSize = (lineEnd - commandLineBuffer.cbegin());
+
+		if (lineSize == 0) {
+			/* Transfer complete */
+
+			/* PEM format must be null terminated, insert null terminator */
+			if ( (pemSize + 1) <= length ) {
+				buffer[pemSize] = 0;
+				pemSize++;
+			}
+			else {
+				/* Message is to large, discard  */
+				pemSize = 0;
+			}
+
+			break;
+		}
+
+		/* PEM format requires a '\n' at the end of each line, keep terminator.
+		 */
+		lineSize++;
+
+		if ( (pemSize + lineSize) <= length ) {
+			std::memcpy(buffer + pemSize, commandLineBuffer.cbegin(), lineSize);
+			pemSize += lineSize;
+		}
+		else {
+			/* Message is to large, discard  */
+			pemSize = 0;
+			break;
+		}
+
+	}
+
+	return pemSize;
+}
 
 /**
   * @brief  Indicates if character is outside valid range of characters

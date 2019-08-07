@@ -42,7 +42,7 @@ class CommandInterface : public cpp_freertos::Thread
 
 		CommandInterface(cpp_freertos::Queue &, UserConfig &);
 
-		ResponseId_t AwsCmdHandler(Buffer_t::const_iterator, Buffer_t::const_iterator);
+		ResponseId_t CloudCmdHandler(Buffer_t::const_iterator, Buffer_t::const_iterator);
 		ResponseId_t ResetCmdHandler();
 		ResponseId_t WifiCmdHandler(Buffer_t::const_iterator, Buffer_t::const_iterator);
 
@@ -51,6 +51,9 @@ class CommandInterface : public cpp_freertos::Thread
         virtual void Run();
 
     private:
+		size_t RxPEMObject(uint8_t *, size_t );
+
+
         Buffer_t commandLineBuffer;
 		cpp_freertos::Queue &msgHandle;
 		UserConfig &userConfigHandle;

@@ -20,51 +20,31 @@
  *
  */
 
-#ifndef RESPONSEINTERFACE_HPP_
-#define RESPONSEINTERFACE_HPP_
-#include "thread.hpp"
-#include "queue.hpp"
 
-class UserConfig;
 
-/**
- * @brief Defines a list of response messages that are available. The ResponseInterface
- * will generate the requested message and transmit to an external host.
- */
-typedef enum {
-	RESPONSE_MSG_CLOUD_STATUS,
-	RESPONSE_MSG_HELP,
-	RESPONSE_MSG_INVALID,
-	RESPONSE_MSG_PROMPT,
-	RESPONSE_MSG_STATUS,
-	RESPONSE_MSG_VERSION,
-	RESPONSE_MSG_WIFI_STATUS
-}ResponseId_t;
+#ifndef USERCONFIG_H_
+#define USERCONFIG_H_
 
+struct UserConfig;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 /**
- * @brief Implements a persistent thread responsible for generating and transmitting
- * 		  response messages back to an external host.
+ * The following "C" interface is used by middleware provided by third parties, which is
+ * written exclusively in "C".
  */
-class ResponseInterface : public cpp_freertos::Thread
-{
-	public:
-		ResponseInterface(cpp_freertos::Queue &, UserConfig &);
-		~ResponseInterface();
 
-	protected:
-		void Run();
+typedef struct UserConfig * UCHandle;
+void GetCloudKey(UCHandle handle, const uint8_t **, const uint16_t ** );
+void GetCloudCert(UCHandle handle, const uint8_t **, const uint16_t ** );
+void GetCloudEndpointUrl(UCHandle, const char ** );
+void GetCloudThingName(UCHandle, const char **);
 
-		void CloudStatusHandler();
-		void WifiStatusHandler();
+#ifdef __cplusplus
+}
+#endif /* extern "C" */
 
-	private:
-		cpp_freertos::Queue &msgHandle;
-		UserConfig &userConfigHandle;
-};
-
-
-
-
-#endif /* RESPONSEINTERFACE_HPP_ */
+#endif /* USERCONFIG_H_ */

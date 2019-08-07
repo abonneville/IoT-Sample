@@ -54,8 +54,8 @@
 static char commandLineBuffer[128] = {};
 
 /* These buffers are for generating and capturing large data sets */
-uint8_t bigTest[BIG_DATA_SIZE];
-uint8_t bigData[BIG_DATA_SIZE];
+uint8_t __attribute__((section(".bigData"))) bigTest[BIG_DATA_SIZE];
+uint8_t __attribute__((section(".bigData"))) bigData[BIG_DATA_SIZE];
 
 
 /* Function prototypes -----------------------------------------------*/
@@ -64,6 +64,10 @@ static void PrepNewlib( void );
 /* External functions ------------------------------------------------*/
 
 
+extern "C" {
+
+UserConfig  userConfig;
+}
 
 
 /**
@@ -150,7 +154,7 @@ class CppUTestThread : public cpp_freertos::Thread {
     public:
 
 	CppUTestThread()
-           : Thread("CppUTestThread", 500, 2)
+           : Thread("CppUTestThread", (8192 / 4), 2)
         {
             Start();
         };
@@ -240,7 +244,18 @@ TEST_GROUP(realloc) {};
 TEST_GROUP(calloc) {};
 TEST_GROUP(fopen) {};
 TEST_GROUP(fwrite) {};
-TEST_GROUP(fread) {};
+TEST_GROUP(fread) {
+	void teardown()
+	{
+		/* Note: if you add a "test" here and it fails, the tear down process is aborted
+		 */
+
+
+		/* Teardown complete, go ahead and "test" as required
+		 */
+	}
+
+};
 TEST_GROUP(crc) {};
 TEST_GROUP(uConfig) {};
 
@@ -937,7 +952,8 @@ TEST(fread, MultiBuffer)
 	CHECK_EQUAL(errno, 0);
 }
 
-
+// TODO - need to re-implement/design based on limited memory available
+#if 0
 TEST(fread, ToLarge)
 {
 	FILE *handle = std::fopen(Device.storage, "r");
@@ -946,7 +962,7 @@ TEST(fread, ToLarge)
 	/* fread will fail, but the exact number returned is dependent on the size of the internal
 	 * buffer. The value returned will likely be a multiple of BUFSIZ until storage was exhausted.
 	 */
-	CHECK(std::fread(bigData, sizeof(bigData[0]), BUFSIZ * 4, handle) > 5u);
+	CHECK(std::fread(bigData, sizeof(bigData[0]), sizeof(bigData), handle) > 5u);
 	CHECK_EQUAL(std::ferror(handle), 0);
 	CHECK_EQUAL(std::feof(handle), 1);
 	CHECK_EQUAL(errno, 0);
@@ -957,8 +973,7 @@ TEST(fread, ToLarge)
 	CHECK_EQUAL(std::feof(handle), 0);
 	CHECK_EQUAL(errno, 0);
 }
-
-
+#endif
 
 
 /*****************************************************************************************
@@ -991,11 +1006,11 @@ TEST(uConfig, Invalid)
 
 	/* Validate interface initializes to known state */
 	UserConfig testConfig; /* Object instantiation emulates a power-on event */
-	const UserConfig::Aws_t &aws = testConfig.GetAwsConfig();
+	const UserConfig::Cloud_t &cloud = testConfig.GetCloudConfig();
 	const UserConfig::Wifi_t &wifi = testConfig.GetWifiConfig();
 
 	std::memset(bigTest, 0x00, UserConfig::TableSize);
-	CHECK_EQUAL(std::memcmp(bigTest, &aws, sizeof(UserConfig::Aws_t)), 0);
+	CHECK_EQUAL(std::memcmp(bigTest, &cloud, sizeof(UserConfig::Cloud_t)), 0);
 	CHECK_EQUAL(std::memcmp(bigTest, &wifi, sizeof(UserConfig::Wifi_t)), 0);
 }
 
@@ -1039,7 +1054,7 @@ TEST(uConfig, SetValues)
 			CHECK_EQUAL(testConfig->SetWifiOn(true), true);
 			CHECK_EQUAL(testConfig->SetWifiPassword( &testPassword, pwdSize ), true);
 			CHECK_EQUAL(testConfig->SetWifiSsid(  &testSsid, ssidSize ), true);
-			CHECK_EQUAL(testConfig->SetAwsKey( std::move(testKey) ), true);
+			CHECK_EQUAL(testConfig->SetCloudKey( std::move(testKey) ), true);
 		}
 
 

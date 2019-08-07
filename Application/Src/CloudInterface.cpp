@@ -41,10 +41,10 @@ enl::WiFiClient client(enl::Type::Udp);
 //const char server[] = "www.google.com";
 //unsigned int localPort = 80;
 
-const char server[] = "0.us.pool.ntp.org";
+//const char server[] = "pool.ntp.org";
+const char server[] = "time.nist.gov";
 unsigned int localPort = 123;      // local port to listen for UDP packets
 
-bool notConnected = true;
 
 static constexpr uint16_t TestBufferSize = 1000;
 uint8_t buf[ TestBufferSize ];
@@ -55,6 +55,7 @@ char packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing pack
 
 
 /* Function prototypes -----------------------------------------------*/
+void connectNTPServer();
 void httpRequest();
 void sendNTPpacket();
 void parseNTPpacket();
@@ -84,6 +85,9 @@ CloudInterface::CloudInterface(UserConfig &uh)
  */
 void CloudInterface::Run()
 {
+	/* MQTT Demo threads take ~10 seconds to establish a connection, so start as early as possible
+	 */
+	vStartMQTTEchoDemo();
 
 	/* Connect to the Internet via WiFi */
 	const UserConfig::Wifi_t &wifiConfig = userConfigHandle.GetWifiConfig();
@@ -92,43 +96,44 @@ void CloudInterface::Run()
 			   wifiConfig.password.value.data(),
 			   enl::WiFiSecurityType::WPA2);
 
-    /* A simple example to demonstrate key and certificate provisioning in
-     * microcontroller flash using PKCS#11 interface. This should be replaced
-     * by production ready key provisioning mechanism. */
-    //vDevModeKeyProvisioning();
-	vStartMQTTEchoDemo();
-
-
 	const char *version = WiFi.firmwareVersion();
-	std::printf("\nFirmware: %s\n", version);
-
-	enl::WiFiSecurityType type = WiFi.encryptionType();
-	std::printf("Security: %d\n", (int)type);
-
-//	uint8_t count = WiFi.scanNetworks();
-//	std::printf("Scan count: %u\n", count);
-
+	std::printf("Info -- Firmware: %s\n", version);
 
 	if (WiFi.status() == enl::WiFiStatus::WL_CONNECTED) {
+		std::printf("Pass -- WiFi connection\n");
+
 		enl::IPAddress ip { 192, 168, 1, 1};
 		enl::PingStatus status = WiFi.ping(ip);
 		if (status == enl::PingStatus::WL_PING_SUCCESS) {
-			std::printf("\nSuccess: IP ping\n");
-			notConnected = true;
+			std::printf("Pass -- IP ping\n");
 		}
 		else
 		{
-			std::printf("\nFail: IP ping\n");
+			std::printf("Fail -- IP ping\n");
+
+			/* Suspend ourselves indefinitely */
+			vTaskSuspend(NULL);
 			while (1);
 		}
 	}
+	else
+	{
+		std::printf("Fail -- WiFi connection\n");
+
+		/* Suspend ourselves indefinitely */
+		vTaskSuspend(NULL);
+		while (1);
+	}
+
+	connectNTPServer();
+
+	/* Establish reference point for subsequent delays */
+	CloudInterface::DelayUntil(1);
 
 	size_t length = 0;
 	while (true) {
 
 		sendNTPpacket();
-
-		Thread::Delay(1000);
 
 		length = client.read(packetBuffer, NTP_PACKET_SIZE);
 		if ( length > 0 )
@@ -139,14 +144,37 @@ void CloudInterface::Run()
 		else if ( length == 0 )
 		{
 			int32_t status = client.status();
-			std::printf("\n **** Connection status: %ld ****\n", status );
+			std::printf("Info -- No response, connection status: %ld \n", status );
 		}
 
-		Thread::Delay(5000);
+		CloudInterface::DelayUntil(10000);
 	}
 }
 
+void connectNTPServer()
+{
+	if ( client.connect(server, localPort) )
+	{
+		std::printf("Pass -- Connection to NTP server\n");
+		enl::IPAddress ipAddress = client.remoteIP();
+		std::printf("Info -- Server IP: ");
+		std::printf("%u.", ipAddress[0] );
+		std::printf("%u.", ipAddress[1] );
+		std::printf("%u.", ipAddress[2] );
+		std::printf("%u\n", ipAddress[3] );
 
+		std::printf("Info -- Server port: %u\n", client.remotePort() );
+
+	}
+	else
+	{
+		std::printf("Fail -- Connection to NTP server\n");
+
+		/* Suspend ourselves indefinitely */
+		vTaskSuspend(NULL);
+		while(1);
+	}
+}
 
 // this method makes a HTTP connection to the server:
 void httpRequest() {
@@ -180,31 +208,6 @@ void httpRequest() {
 
 void sendNTPpacket()
 {
-	if ( notConnected )
-	{
-		notConnected = false;
-
-		std::printf("Connecting to server...");
-		if ( client.connect(server, localPort) )
-		{
-			enl::IPAddress ipAddress = client.remoteIP();
-			std::printf("ok\n");
-			std::printf("Server IP: ");
-			std::printf("%u.", ipAddress[0] );
-			std::printf("%u.", ipAddress[1] );
-			std::printf("%u.", ipAddress[2] );
-			std::printf("%u\n", ipAddress[3] );
-
-			std::printf("Server port: %u\n", client.remotePort() );
-		}
-		else
-		{
-			std::printf("fail\n");
-			while(1);
-		}
-	}
-
-
 	// Initialize values needed to form NTP request
 	// (see URL above for details on the packets)
 	std::memset(packetBuffer, 0, NTP_PACKET_SIZE);
@@ -222,7 +225,9 @@ void sendNTPpacket()
 	// all NTP fields have been given values, now
 	// you can send a packet requesting a timestamp:
 
-	client.write(packetBuffer, NTP_PACKET_SIZE);
+	if( client.write(packetBuffer, NTP_PACKET_SIZE) != NTP_PACKET_SIZE) {
+		std::printf("NTP packet not sent.\n");
+	}
 }
 
 void parseNTPpacket()

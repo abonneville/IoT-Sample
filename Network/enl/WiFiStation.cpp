@@ -528,7 +528,11 @@ PingStatus WiFiStation::ping(IPAddress ip, uint32_t timeout)
 
 
 /**
- *
+ * @brief  	Ping the requested host.
+ * @note	Troubleshooting utility to verify host is reachable
+ * @param   host URL
+ * @param	timeout In milliseconds to wait for each reply.
+ * @retval	status code indicating ability to reach host
  */
 PingStatus WiFiStation::ping(const char * host, uint32_t timeout)
 {

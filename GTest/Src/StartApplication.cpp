@@ -923,11 +923,11 @@ TEST_F(uConfig, Invalid)
 
 	/* Validate interface initializes to known state */
 	UserConfig testConfig; /* Object instantiation emulates a power-on event */
-	const UserConfig::Aws_t &aws = testConfig.GetAwsConfig();
+	const UserConfig::Cloud_t &aws = testConfig.GetCloudConfig();
 	const UserConfig::Wifi_t &wifi = testConfig.GetWifiConfig();
 
 	std::memset(bigTest, 0x00, UserConfig::TableSize);
-	EXPECT_EQ(std::memcmp(bigTest, &aws, sizeof(UserConfig::Aws_t)), 0);
+	EXPECT_EQ(std::memcmp(bigTest, &aws, sizeof(UserConfig::Cloud_t)), 0);
 	EXPECT_EQ(std::memcmp(bigTest, &wifi, sizeof(UserConfig::Wifi_t)), 0);
 }
 

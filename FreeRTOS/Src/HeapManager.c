@@ -20,6 +20,9 @@
  *
  */
 
+#include "FreeRTOS.h"
+static uint8_t __attribute__((section(".bigData.heap"))) ucHeap[ configTOTAL_HEAP_SIZE ];
+
 #include "..\Source\portable\MemMang\heap_4.c"
 
 /* Typedef -----------------------------------------------------------*/

@@ -31,17 +31,14 @@
 /* Entry Point */
 ENTRY(Reset_Handler)
 
-/* Highest address of the user mode stack */
-_estack = 0x20018000;    /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x0;      /* required amount of heap  */
 _Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
 {
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 96K
-RAM2 (xrw)      : ORIGIN = 0x10000000, LENGTH = 32K
+SRAM1 (xrw)      : ORIGIN = 0x20000000, LENGTH = 96K
+RAM (xrw)      : ORIGIN = 0x10000000, LENGTH = 32K
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 1024K
 }
 
@@ -110,6 +107,22 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
   } >FLASH
 
+
+  /**
+   * Start of RAM 
+   */
+   
+   /* Stack grows down, and is at the start of RAM to prevent stack overflow.
+    *
+    * Note: this is the main stack pointer used for ISR only, not the individual thread stacks
+    */
+  .stack : 
+  {
+    . = . + _Min_Stack_Size;
+    . = ALIGN(4);
+    _estack = .;
+  } >RAM   
+
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
@@ -143,18 +156,16 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM
 
-  /* User_heap_stack section, used to check that there is enough RAM left */
-  ._user_heap_stack :
-  {
-    . = ALIGN(4);
-    PROVIDE ( end = . );
-    PROVIDE ( _end = . );
-    . = . + _Min_Heap_Size;
-    . = . + _Min_Stack_Size;
-    . = ALIGN(4);
-  } >RAM
 
-  
+  /**
+   * Start of SRAM1 
+   */
+  .bigData :
+  {
+    *(.bigData.heap);
+    *(.bigData.bufferPool);
+  } >SRAM1
+
 
   /* Remove information from the standard libraries */
   /DISCARD/ :

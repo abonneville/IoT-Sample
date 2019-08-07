@@ -55,7 +55,10 @@ extern "C" {
  * project grows, this approach may have to change and use a singleton and/or factory design
  * pattern for distributing initialized object handles.
  */
-static UserConfig userConfig;
+extern "C" {
+
+UserConfig userConfig;
+}
 
 constexpr static UBaseType_t itemSize = sizeof(ResponseId_t);
 constexpr static UBaseType_t maxItems = 5;
