@@ -254,7 +254,9 @@ void parseNTPpacket()
 	static constexpr uint32_t SecsPerMin = 60;
 
 	std::printf("UTC time = ");
-	std::printf("%lu:", (epoch % SecsPerDay ) / SecsPerHour );
-	std::printf("%lu:", (epoch % SecsPerHour) / SecsPerMin );
-	std::printf("%lu\n", (epoch % SecsPerMin ) );
+	std::printf("%.2lu:", (epoch % SecsPerDay ) / SecsPerHour );
+	std::printf("%.2lu:", (epoch % SecsPerHour) / SecsPerMin );
+	std::printf("%.2lu\n", (epoch % SecsPerMin ) );
+
+	std::fflush(stdout);
 }

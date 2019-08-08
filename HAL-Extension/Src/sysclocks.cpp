@@ -20,19 +20,36 @@
  *
  */
 
+#include <chrono>
+//#include "stm32l4xx_hal.h"
+#include "FreeRTOS.h"
+#include "task.h"
+
+/* Typedef -----------------------------------------------------------*/
+
+/* Define ------------------------------------------------------------*/
+
+/* Macro -------------------------------------------------------------*/
+
+/* Variables ---------------------------------------------------------*/
+
+/* Function prototypes -----------------------------------------------*/
+
+/* External functions ------------------------------------------------*/
 
 
-#ifndef STARTAPPLICATION_HPP_
-#define STARTAPPLICATION_HPP_
+namespace std
+{
+	namespace chrono
+	{
+		system_clock::time_point system_clock::now() noexcept
+		{
+			return time_point(milliseconds(0));
+		}
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void StartApplication(void);
-
-#ifdef __cplusplus
+		steady_clock::time_point steady_clock::now() noexcept
+		{
+			return time_point(milliseconds(xTaskGetTickCount()));
+		}
+	}
 }
-#endif
-
-#endif /* STARTAPPLICATION_HPP_ */

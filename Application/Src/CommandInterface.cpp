@@ -31,7 +31,7 @@
 #include "UserConfig.hpp"
 #include "CommandInterface.hpp"
 
-
+#include "stm32l4xx_hal.h"
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -278,11 +278,13 @@ ResponseId_t CommandInterface::CloudCmdHandler(Buffer_t::const_iterator first, B
 
 /**
  * @brief	Parse and execute the reset command.
- * @param first, last The range of elements to be evaluated for a valid command.
  * @retval  User response message to be sent.
  */
 ResponseId_t CommandInterface::ResetCmdHandler()
 {
+	HAL_NVIC_SystemReset();
+
+	/* Should never get here */
 	return RESPONSE_MSG_INVALID;
 }
 
@@ -298,6 +300,8 @@ ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Bu
 
 	switch (first[0]) {
 	case 'o':
+/* TODO: under review, not yet implemented */
+#if 0
 		if (ParseCmdWordEnd(first, fieldOff)) {
 			if (userConfigHandle.SetWifiOn(false) == true) {
 				responseId = RESPONSE_MSG_PROMPT;
@@ -308,6 +312,7 @@ ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Bu
 				responseId = RESPONSE_MSG_PROMPT;
 			}
 		}
+#endif
 		break;
 
 	case 'p':

@@ -316,7 +316,7 @@ static BaseType_t prvNetworkSend( void * pvContext,
     STSecureSocket_t * pxSecureSocket;
     uint16_t usSentBytes = 0;
     BaseType_t xRetVal = SOCKETS_SOCKET_ERROR;
-    ES_WIFI_Status_t xWiFiResult;
+    ES_WIFI_Status_t xWiFiResult = SOCKETS_SOCKET_ERROR;
 
     /* Shortcut for easy access. */
     pxSecureSocket = &( xSockets[ ulSocketNumber ] );
@@ -407,7 +407,7 @@ static BaseType_t prvNetworkRecv( void * pvContext,
     STSecureSocket_t * pxSecureSocket;
     uint16_t usReceivedBytes = 0;
     BaseType_t xRetVal;
-    ES_WIFI_Status_t xWiFiResult;
+    ES_WIFI_Status_t xWiFiResult = SOCKETS_SOCKET_ERROR;
     TickType_t xTimeOnEntering = xTaskGetTickCount(), xSemaphoreWait;
 
     /* Shortcut for easy access. */

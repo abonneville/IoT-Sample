@@ -9,6 +9,7 @@
 #include <ThreadConfig.hpp>
 #include <string>
 #include <cstdio>
+#include <chrono>
 
 #include "ticks.hpp"
 #include "version.hpp"
@@ -17,6 +18,7 @@
 #include "UserConfig.hpp"
 #include "ResponseInterface.hpp"
 #include "WiFiStation.hpp"
+#include "AppVersion.hpp"
 
 using namespace cpp_freertos;
 using namespace std;
@@ -135,7 +137,7 @@ static void HelpHandler(void)
 	std::printf("%-*s %s\n", width, "cloud url <field>","Sets the hostname/endpoint URL for connecting to a cloud server.");
 	std::printf("%-*s %s\n", width, "cloud status","Reports status for the cloud connection.");
 	std::printf("%-*s %s\n", width, "reset","Full processor reset; core and peripherals, as well as external modules.");
-	std::printf("%-*s %s\n", width, "status","TBD");
+	std::printf("%-*s %s\n", width, "status","High level system information and status.");
 	std::printf("%-*s %s\n", width, "version","Report application and library version numbers.");
 	std::printf("%-*s %s\n", width, "wifi on/off","Immediately turns WiFi radio on or off.");
 	std::printf("%-*s %s\n", width, "wifi password <field>","Set the password for connecting to a particular WiFi network.");
@@ -173,8 +175,24 @@ static void StatusHandler(void)
 {
 	std::printf("-- System Status --\n");
 
+	/* Report duration since system was first turned on */
+	using seconds32 = std::chrono::duration<uint32_t, std::ratio<1> >;
+	auto tp = std::chrono::time_point_cast<seconds32> ( std::chrono::steady_clock::now() );
+
+	uint32_t epoch = tp.time_since_epoch().count();
+	uint32_t hour = epoch/3600;
+	uint32_t sec= epoch%3600;
+	uint32_t min = sec/60;
+	uint32_t sec1 = sec%60;
+
+	std::printf("Uptime: ");
+	std::printf("%.2lu:", hour );
+	std::printf("%.2lu:", min );
+	std::printf("%.2lu\n", sec1 );
+
+	/* Report high level link status */
 	if ( WiFi.RSSI() != 0 ) {
-		std::printf("%s, Connected, ", WiFi.SSID() );
+		std::printf("WiFi: %s, Connected, ", WiFi.SSID() );
 
 		if ( enl::PingStatus::WL_PING_SUCCESS == WiFi.ping("www.google.com", 10) ) {
 			std::printf("Internet Access\n");
@@ -198,7 +216,6 @@ static void StatusHandler(void)
  */
 static void VersionHandler(void)
 {
-#define APPLICATION_VERSION_STRING "1.0.x1"
 	uint32_t version[4] = {};
 	std::printf("Device application, version: %s\n", APPLICATION_VERSION_STRING);
 	std::printf("Device operating system, version:\n");
@@ -234,7 +251,7 @@ void ResponseInterface::WifiStatusHandler()
 	switch (wifiSecurity)
 	{
 	case enl::WiFiSecurityType::Open:
-		std::printf(" Open - no security\n");
+		std::printf("Open - no security\n");
 		break;
 
 	case enl::WiFiSecurityType::WEP:
@@ -281,12 +298,12 @@ void ResponseInterface::WifiStatusHandler()
 
 	enl::MACAddress macAddress = WiFi.macAddress(macAddress);
 	std::printf("%-*s ", width, "Device MAC" );
-	std::printf("%u.", macAddress[0] );
-	std::printf("%u.", macAddress[1] );
-	std::printf("%u.", macAddress[2] );
-	std::printf("%u.", macAddress[3] );
-	std::printf("%u.", macAddress[4] );
-	std::printf("%u\n", macAddress[5] );
+	std::printf("%.2X-", macAddress[0] );
+	std::printf("%.2X-", macAddress[1] );
+	std::printf("%.2X-", macAddress[2] );
+	std::printf("%.2X-", macAddress[3] );
+	std::printf("%.2X-", macAddress[4] );
+	std::printf("%.2X\n", macAddress[5] );
 
 	std::printf("%-*s %s\n", width, "Device firmware", WiFi.firmwareVersion() );
 
