@@ -12,7 +12,7 @@ Sensor information is not currently uploaded, however, a secure TLS connections 
 
 ## Documentation
 
-Project specific software documenation is available [here](https://github.com/abonneville/IoT-Sample/tree/HEAD/Docs):
+Project specific software documenation is available [here](https://github.com/abonneville/IoT-Sample/tree/master/Docs):
 * Software Requirements Specification (SRS)
 * Software Design Documenation (SDD)
 
