@@ -65,7 +65,7 @@ wifi ssid MySsid
 ```
 
 * Reset your target board, and the terminal should begin displaying progress messages as it connects to:
-    * an NTP server to obtain UTC time
+    * An NTP server to obtain UTC time
     * AWS webserver to exchange Hello World message
 
 To download the latest Wi-Fi firmware (Inventek ISM 43362), see [ STM32L4 Discovery kit IoT node, low-power wireless, Bluetooth Low Energy, NFC, SubGHz, Wi-Fi.](https://www.st.com/resource/en/utilities/inventek_fw_updater.zip) In Binary Resources, choose the download link for Inventek ISM 43362 Wi-Fi module firmware update.
