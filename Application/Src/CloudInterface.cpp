@@ -94,7 +94,7 @@ void CloudInterface::Run()
 
 	WiFi.begin(wifiConfig.ssid.value.data(),
 			   wifiConfig.password.value.data(),
-			   enl::WiFiSecurityType::WPA2);
+			   enl::WiFiSecurityType::Auto);
 
 	const char *version = WiFi.firmwareVersion();
 	std::printf("Info -- Firmware: %s\n", version);
