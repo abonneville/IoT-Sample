@@ -10,6 +10,12 @@ Project consists of the embedded software that will be developed for installatio
 
 Sensor information is not currently uploaded, however, a secure TLS connections is established and demonstrated by exchanging a hello world message with AWS servers.
 
+## Documentation
+
+Project specific software documenation is available [here](https://github.com/abonneville/IoT-Sample/tree/master/Docs):
+* Software Requirements Specification (SRS)
+* Software Design Documenation (SDD)
+
 ## Quick Start
 
 This demo project was built for the STM32L475VG and installed on the B-L475E-IOT01A1 Discovery Board.
@@ -18,7 +24,11 @@ This demo project was built for the STM32L475VG and installed on the B-L475E-IOT
 
     (Other Eclipse based toolchains may also work, as long as a gcc cross-compiler is available for STM32.)
 
-* Clone the IoT Sample project and build the "Startup" project. Load and the "Startup.elf" using your preferred debugger (J-Link or ST-Link). 
+* Clone the IoT Sample project into a local folder (e.g. IoT-Sample)
+
+* Launch Eclipse into your new workspace folder (e.g. IoT-Sample). Import each of the Eclipse projects, see below for list under Code Structure.
+
+* Build the "Startup" project. Load the "Startup.elf" using your preferred debugger (J-Link or ST-Link). 
 
 Note: there are no cloud credentials or WiFi settings specficied in the code.
 
