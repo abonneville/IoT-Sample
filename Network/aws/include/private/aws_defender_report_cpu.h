@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Andrew Bonneville.  All Rights Reserved.
+ * Amazon FreeRTOS
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -18,13 +19,14 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
+ * http://aws.amazon.com/freertos
+ * http://www.FreeRTOS.org
  */
+#ifndef AWS_DEFENDER_REPORT_CPU_H /* Guards against multiple inclusion */
+#define AWS_DEFENDER_REPORT_CPU_H
 
+#include "aws_cbor.h"
 
+CBORHandle_t CpuReportGet( void );
 
-#ifndef APPVERSION_HPP_
-#define APPVERSION_HPP_
-
-#define APPLICATION_VERSION_STRING "1.1.2"
-
-#endif /* APPVERSION_HPP_ */
+#endif /* ifndef AWS_DEFENDER_CPU_H */

@@ -24,43 +24,6 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>aws/crypto</name>
-			<type>2</type>
-			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/crypto</locationURI>
-		</link>
-		<link>
-			<name>aws/include</name>
-			<type>2</type>
-			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/include</locationURI>
-		</link>
-		<link>
-			<name>aws/mqtt</name>
-			<type>2</type>
-			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/mqtt</locationURI>
-		</link>
-		<link>
-			<name>aws/tls</name>
-			<type>2</type>
-			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/tls</locationURI>
-		</link>
-		<link>
-			<name>aws/utils</name>
-			<type>2</type>
-			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/utils</locationURI>
-		</link>
-		<link>
-			<name>aws/pkcs11/mbedtls</name>
-			<type>2</type>
-			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/pkcs11/mbedtls</locationURI>
-		</link>
-		<link>
-			<name>aws/pkcs11/pkcs11</name>
-			<type>2</type>
-			<locationURI>SOURCE_PUBLIC/amazon-freertos/amazon-freertos/lib/third_party/pkcs11</locationURI>
-		</link>
-	</linkedResources>
 	<variableList>
 		<variable>
 			<name>SOURCE_PUBLIC</name>

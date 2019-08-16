@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Andrew Bonneville.  All Rights Reserved.
+ * Amazon FreeRTOS System Initialization
+ * Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -18,13 +19,37 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
+ * http://aws.amazon.com/freertos
+ * http://www.FreeRTOS.org
  */
+#include "FreeRTOS.h"
+#include "aws_system_init.h"
 
+/* Library code. */
+extern BaseType_t BUFFERPOOL_Init( void );
+extern BaseType_t MQTT_AGENT_Init( void );
+extern BaseType_t SOCKETS_Init( void );
 
+/*-----------------------------------------------------------*/
 
-#ifndef APPVERSION_HPP_
-#define APPVERSION_HPP_
+/**
+ * @brief Initializes Amazon FreeRTOS libraries.
+ */
+BaseType_t SYSTEM_Init( void )
+{
+    BaseType_t xResult = pdPASS;
 
-#define APPLICATION_VERSION_STRING "1.1.2"
+    xResult = BUFFERPOOL_Init();
 
-#endif /* APPVERSION_HPP_ */
+    if( xResult == pdPASS )
+    {
+        xResult = MQTT_AGENT_Init();
+    }
+
+    if( xResult == pdPASS )
+    {
+        xResult = SOCKETS_Init();
+    }
+
+    return xResult;
+}

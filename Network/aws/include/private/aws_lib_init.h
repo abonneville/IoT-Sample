@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Andrew Bonneville.  All Rights Reserved.
+ * Amazon FreeRTOS Secure Socket V1.0.0
+ * Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -18,13 +19,16 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
+ * http://aws.amazon.com/freertos
+ * http://www.FreeRTOS.org
  */
 
 
+#ifndef _AWS_LIB_INIT_H_
+#define _AWS_LIB_INIT_H_
 
-#ifndef APPVERSION_HPP_
-#define APPVERSION_HPP_
+#include "FreeRTOS.h"
 
-#define APPLICATION_VERSION_STRING "1.1.2"
+#define lib_initDECLARE_LIB_INIT( f )    extern BaseType_t f( void )
 
-#endif /* APPVERSION_HPP_ */
+#endif /* _AWS_LIB_INIT_H_ */

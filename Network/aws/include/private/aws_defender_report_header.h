@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Andrew Bonneville.  All Rights Reserved.
+ * Amazon FreeRTOS
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -18,13 +19,20 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
+ * http://aws.amazon.com/freertos
+ * http://www.FreeRTOS.org
  */
+#ifndef AWS_DEFENDER_HEADER_H
+#define AWS_DEFENDER_HEADER_H
 
+#include "aws_cbor.h"
+#include "aws_defender_report_utils.h"
 
+extern const char * DEFENDER_METRICS_VERSION;
 
-#ifndef APPVERSION_HPP_
-#define APPVERSION_HPP_
+#define DEFENDER_REPORT_ID_TAG    DEFENDER_SelectTag( "report_id", "rid" )
+#define DEFENDER_VERSION_TAG      DEFENDER_SelectTag( "version", "v" )
 
-#define APPLICATION_VERSION_STRING "1.1.2"
+CBORHandle_t GetHeader( void );
 
-#endif /* APPVERSION_HPP_ */
+#endif /* end of include guard: AWS_DEFENDER_HEADER_H */

@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Andrew Bonneville.  All Rights Reserved.
+ * Amazon FreeRTOS+POSIX V1.0.3
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -18,13 +19,37 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
+ * http://aws.amazon.com/freertos
+ * http://www.FreeRTOS.org
  */
 
+/**
+ * @file unistd.h
+ * @brief Standard symbolic constants and types
+ *
+ * http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/unistd.h.html
+ */
 
+#ifndef _FREERTOS_POSIX_UNISTD_H_
+#define _FREERTOS_POSIX_UNISTD_H_
 
-#ifndef APPVERSION_HPP_
-#define APPVERSION_HPP_
+#include "FreeRTOS_POSIX/sys/types.h"
 
-#define APPLICATION_VERSION_STRING "1.1.2"
+/**
+ * @brief Suspend execution for an interval of time.
+ *
+ * http://pubs.opengroup.org/onlinepubs/9699919799/functions/sleep.html
+ */
+unsigned sleep( unsigned seconds );
 
-#endif /* APPVERSION_HPP_ */
+/**
+ * @brief Suspend execution for microsecond intervals.
+ *
+ * This is a useful, non-POSIX function.
+ * @param[in] usec The number of microseconds to suspend execution.
+ *
+ * @return 0 always. This function does not specify any failure conditions.
+ */
+int usleep( useconds_t usec );
+
+#endif /* ifndef _FREERTOS_POSIX_UNISTD_H_ */
