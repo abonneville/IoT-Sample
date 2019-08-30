@@ -44,8 +44,8 @@ enl::WiFiClient client(enl::Type::Udp);
 //const char server[] = "www.google.com";
 //unsigned int localPort = 80;
 
-//const char server[] = "pool.ntp.org";
-const char server[] = "time.nist.gov";
+const char server[] = "pool.ntp.org";
+//const char server[] = "time.nist.gov";
 unsigned int localPort = 123;      // local port to listen for UDP packets
 
 
