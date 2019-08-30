@@ -21,6 +21,7 @@
  */
 
 #include <cstring>
+#include <chrono>
 
 #include "WiFiClient.hpp"
 #include "ThreadConfig.hpp"
@@ -28,6 +29,8 @@
 #include "CloudInterface.hpp"
 
 #include "WiFiStation.hpp"
+#include "hts221.hpp"
+#include "lps22hb.hpp"
 
 /* Typedef -----------------------------------------------------------*/
 
@@ -85,6 +88,43 @@ CloudInterface::CloudInterface(UserConfig &uh)
  */
 void CloudInterface::Run()
 {
+#if 0
+	sensor::HTS221 hts221(I2C2_Bus);
+	sensor::LPS22HB lps22hb(I2C2_Bus);
+
+	using milli32 = std::chrono::duration<uint32_t, std::milli>;
+	auto tp =  std::chrono::time_point_cast<milli32> ( std::chrono::steady_clock::now() );
+	auto duration = tp.time_since_epoch().count();
+
+
+	if (hts221 && lps22hb)
+	{
+		/* Sensor found, wait for the sensor to complete one acquisition */
+		while (  (hts221.available() == false)
+			  && (lps22hb.available() == false) ) {}
+	}
+
+
+	while (1)
+	{
+		if ( hts221.available() && lps22hb.available() )
+		{
+			tp =  std::chrono::time_point_cast<milli32> ( std::chrono::steady_clock::now() );
+			duration = tp.time_since_epoch().count();
+			std::printf("Time: %lu\n", duration);
+			std::printf("Temperature: %i C  ", hts221.getTemperature() );
+			std::printf("Humidity: %u %%rH\n", hts221.getHumidity() );
+
+			std::printf("Temperature: %i C  ", lps22hb.getTemperature() );
+			std::printf("Humidity: %u hPa\n", lps22hb.getPressure() );
+		}
+
+		CloudInterface::DelayUntil(100);
+	}
+
+
+#else
+
 	/* MQTT Demo threads take ~10 seconds to establish a connection, so start as early as possible
 	 */
 	vStartMQTTEchoDemo();
@@ -149,6 +189,8 @@ void CloudInterface::Run()
 
 		CloudInterface::DelayUntil(10000);
 	}
+#endif
+
 }
 
 void connectNTPServer()
