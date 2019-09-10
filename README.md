@@ -6,10 +6,6 @@ Project consists of the embedded software that will be developed for installatio
 * The USB interface will implement a command and response interface that connects directly to a serial terminal (e.g. YAT, HyperTerminal). This will provide the ability to configure the embedded software for different Wi-Fi installations, cloud server configuration, as well the ability to directly connect and monitor system behavior.
 * The Wi-Fi interface will provide an Internet connection to periodically deliver sensor information to cloud servers
 
-## Limitations
-
-Sensor information is not currently uploaded, however, a secure TLS connections is established and demonstrated by exchanging a hello world message with AWS servers.
-
 ## Documentation
 
 Project specific software documenation is available [here](https://github.com/abonneville/IoT-Sample/tree/master/Docs):
@@ -64,9 +60,8 @@ wifi password MyPassword
 wifi ssid MySsid
 ```
 
-* Reset your target board, and the terminal should begin displaying progress messages as it connects to:
-    * An NTP server to obtain UTC time
-    * AWS webserver to exchange Hello World message
+* Reset your target board, and the terminal should begin displaying progress messages as it connects & publishes sensor
+data to AWS cloud server.
 
 To download the latest Wi-Fi firmware (Inventek ISM 43362), see [ STM32L4 Discovery kit IoT node, low-power wireless, Bluetooth Low Energy, NFC, SubGHz, Wi-Fi.](https://www.st.com/resource/en/utilities/inventek_fw_updater.zip) In Binary Resources, choose the download link for Inventek ISM 43362 Wi-Fi module firmware update.
 

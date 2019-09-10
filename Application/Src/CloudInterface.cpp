@@ -21,9 +21,7 @@
  */
 
 #include <cstring>
-#include <chrono>
 
-#include "WiFiClient.hpp"
 #include "ThreadConfig.hpp"
 #include "UserConfig.hpp"
 #include "CloudInterface.hpp"
@@ -32,40 +30,53 @@
 #include "hts221.hpp"
 #include "lps22hb.hpp"
 
+#include "UserConfig.h"
+
+extern "C" {
+#include "aws_mqtt_agent.h"
+}
+
 /* Typedef -----------------------------------------------------------*/
 
 /* Define ------------------------------------------------------------*/
+/**
+ * @brief MQTT client ID.
+ *
+ * It must be unique per MQTT broker.
+ */
+#define MQTT_CLIENT_ID            ( ( const uint8_t * ) "MQTTEcho" )
+
+/* Timeout used when establishing a connection, which required TLS
+ * negotiation. */
+#define MQTT_TLS_NEGOTIATION_TIMEOUT          pdMS_TO_TICKS( 12000 )
+
+/* Timeout used when performing MQTT operations that do not need extra time
+ * to perform a TLS negotiation. */
+#define MQTT_TIMEOUT                               pdMS_TO_TICKS( 2500 )
+
+/* Port number the MQTT broker is using. */
+#define MQTT_BROKER_PORT             8883
+
+/* Topic name for the MQTT broker */
+#define TOPIC_NAME (const uint8_t *)"stm32/sensor"
+
 
 /* Macro -------------------------------------------------------------*/
 
 /* Variables ---------------------------------------------------------*/
 enl::WiFiStation WiFi;
-enl::WiFiClient client(enl::Type::Udp);
-//const char server[] = "www.google.com";
-//unsigned int localPort = 80;
 
-const char server[] = "pool.ntp.org";
-//const char server[] = "time.nist.gov";
-unsigned int localPort = 123;      // local port to listen for UDP packets
-
-
-static constexpr uint16_t TestBufferSize = 1000;
-uint8_t buf[ TestBufferSize ];
-
-
-const int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
-char packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+static MQTTAgentHandle_t xMQTTHandle = NULL;
+static const size_t buf_size = 512;
+static char buf[buf_size] = {};
 
 
 /* Function prototypes -----------------------------------------------*/
-void connectNTPServer();
-void httpRequest();
-void sendNTPpacket();
-void parseNTPpacket();
+static bool networkInit(UserConfig &userConfig);
+static bool cloudConnect(UserConfig &userConfig);
+static void cloudDisconnect();
+static void cloudSend(int16_t temperature, uint16_t humidity, uint16_t pressure);
 
-/* TODO: delete after replacing demo */
-extern "C" void vDevModeKeyProvisioning( void );
-extern "C" void vStartMQTTEchoDemo( void );
 
 /* External functions ------------------------------------------------*/
 
@@ -88,217 +99,182 @@ CloudInterface::CloudInterface(UserConfig &uh)
  */
 void CloudInterface::Run()
 {
-#if 0
+	uint16_t humidity, pressure;
+	int16_t temperature;
+
 	sensor::HTS221 hts221(I2C2_Bus);
 	sensor::LPS22HB lps22hb(I2C2_Bus);
 
-	using milli32 = std::chrono::duration<uint32_t, std::milli>;
-	auto tp =  std::chrono::time_point_cast<milli32> ( std::chrono::steady_clock::now() );
-	auto duration = tp.time_since_epoch().count();
+	networkInit(userConfigHandle);
 
-
-	if (hts221 && lps22hb)
+	if( cloudConnect(userConfigHandle) )
 	{
-		/* Sensor found, wait for the sensor to complete one acquisition */
-		while (  (hts221.available() == false)
-			  && (lps22hb.available() == false) ) {}
-	}
-
-
-	while (1)
-	{
-		if ( hts221.available() && lps22hb.available() )
+		for(size_t index = 0; index < 10; index++)
 		{
-			tp =  std::chrono::time_point_cast<milli32> ( std::chrono::steady_clock::now() );
-			duration = tp.time_since_epoch().count();
-			std::printf("Time: %lu\n", duration);
-			std::printf("Temperature: %i C  ", hts221.getTemperature() );
-			std::printf("Humidity: %u %%rH\n", hts221.getHumidity() );
+			temperature = hts221.getTemperature();
+			humidity = hts221.getHumidity();
+			pressure = lps22hb.getPressure();
 
-			std::printf("Temperature: %i C  ", lps22hb.getTemperature() );
-			std::printf("Humidity: %u hPa\n", lps22hb.getPressure() );
+			cloudSend(temperature, humidity, pressure);
+
+			CloudInterface::DelayUntil(5000);
 		}
 
-		CloudInterface::DelayUntil(100);
+		cloudDisconnect();
+		WiFi.disconnect();
 	}
 
+    configPRINTF( ("Demo completed.\n") );
 
-#else
+	/* Suspend ourselves indefinitely */
+	vTaskSuspend(NULL);
+	while (1);
+}
 
-	/* MQTT Demo threads take ~10 seconds to establish a connection, so start as early as possible
-	 */
-	vStartMQTTEchoDemo();
-
+/**
+ * @brief Establishes a valid network connection
+ * @param userConfig contains the network parameters necessary to establish a network connection
+ */
+static bool networkInit(UserConfig &userConfig)
+{
 	/* Connect to the Internet via WiFi */
-	const UserConfig::Wifi_t &wifiConfig = userConfigHandle.GetWifiConfig();
+	const UserConfig::Wifi_t &wifiConfig = userConfig.GetWifiConfig();
 
-	WiFi.begin(wifiConfig.ssid.value.data(),
-			   wifiConfig.password.value.data(),
-			   enl::WiFiSecurityType::Auto);
+	enl::WiFiStatus status = WiFi.begin(wifiConfig.ssid.value.data(),
+									    wifiConfig.password.value.data(),
+										enl::WiFiSecurityType::Auto);
 
-	const char *version = WiFi.firmwareVersion();
-	std::printf("Info -- Firmware: %s\n", version);
-
-	if (WiFi.status() == enl::WiFiStatus::WL_CONNECTED) {
-		std::printf("Pass -- WiFi connection\n");
-
-		enl::IPAddress ip { 192, 168, 1, 1};
-		enl::PingStatus status = WiFi.ping(ip);
-		if (status == enl::PingStatus::WL_PING_SUCCESS) {
-			std::printf("Pass -- IP ping\n");
-		}
-		else
-		{
-			std::printf("Fail -- IP ping\n");
-
-			/* Suspend ourselves indefinitely */
-			vTaskSuspend(NULL);
-			while (1);
-		}
+	if ( status == enl::WiFiStatus::WL_CONNECTED )
+	{
+	    configPRINTF( ("WiFi connected.\n") );
 	}
 	else
 	{
-		std::printf("Fail -- WiFi connection\n");
-
-		/* Suspend ourselves indefinitely */
-		vTaskSuspend(NULL);
-		while (1);
+	    configPRINTF( ("Error: failed to establish WiFi connection with error code %i\n", status) );
 	}
 
-	connectNTPServer();
-
-	/* Establish reference point for subsequent delays */
-	CloudInterface::DelayUntil(1);
-
-	size_t length = 0;
-	while (true) {
-
-		sendNTPpacket();
-
-		length = client.read(packetBuffer, NTP_PACKET_SIZE);
-		if ( length > 0 )
-		{
-			parseNTPpacket();
-
-		}
-		else if ( length == 0 )
-		{
-			int32_t status = client.status();
-			std::printf("Info -- No response, connection status: %ld \n", status );
-		}
-
-		CloudInterface::DelayUntil(10000);
-	}
-#endif
-
+	return ( status == enl::WiFiStatus::WL_CONNECTED );
 }
 
-void connectNTPServer()
+
+/**
+ * @brief Establishes a valid MQTT client connection with a cloud server
+ * @param userConfig contains the cloud parameters necessary to establish a server connection
+ */
+static bool cloudConnect(UserConfig &userConfig)
 {
-	if ( client.connect(server, localPort) )
-	{
-		std::printf("Pass -- Connection to NTP server\n");
-		enl::IPAddress ipAddress = client.remoteIP();
-		std::printf("Info -- Server IP: ");
-		std::printf("%u.", ipAddress[0] );
-		std::printf("%u.", ipAddress[1] );
-		std::printf("%u.", ipAddress[2] );
-		std::printf("%u\n", ipAddress[3] );
+    MQTTAgentReturnCode_t xReturned;
+    BaseType_t xReturn = pdFAIL;
 
-		std::printf("Info -- Server port: %u\n", client.remotePort() );
+    /** Grab a copy of the cloud configuration value(s)
+     */
+    UCHandle handle = &userConfig;
 
-	}
-	else
-	{
-		std::printf("Fail -- Connection to NTP server\n");
+    const char * mqttBrokerEndpointurl = NULL;
+    GetCloudEndpointUrl(handle, &mqttBrokerEndpointurl);
 
-		/* Suspend ourselves indefinitely */
-		vTaskSuspend(NULL);
-		while(1);
-	}
+    MQTTAgentConnectParams_t xConnectParameters =
+    {
+    	mqttBrokerEndpointurl, 				  /* The URL of the MQTT broker to connect to. */
+		mqttagentREQUIRE_TLS,                 /* Connection flags. */
+        pdFALSE,                              /* Deprecated. */
+        MQTT_BROKER_PORT,                     /* Port number on which the MQTT broker is listening. Can be overridden by ALPN connection flag. */
+        MQTT_CLIENT_ID,                       /* Client Identifier of the MQTT client. It should be unique per broker. */
+        0,                                    /* The length of the client Id, filled in later as not const. */
+        pdFALSE,                              /* Deprecated. */
+        NULL,                                 /* User data supplied to the callback. Can be NULL. */
+        NULL,                                 /* Callback used to report various events. Can be NULL. */
+        NULL,                                 /* Certificate used for secure connection. Can be NULL. */
+        0                                     /* Size of certificate used for secure connection. */
+    };
+
+    /* Check this function has not already been executed. */
+    configASSERT( xMQTTHandle == NULL );
+
+    /* The MQTT client object must be created before it can be used.  The
+     * maximum number of MQTT client objects that can exist simultaneously
+     * is set by mqttconfigMAX_BROKERS. */
+    xReturned = MQTT_AGENT_Create( &xMQTTHandle );
+
+    if( xReturned == eMQTTAgentSuccess )
+    {
+        /* Fill in the MQTTAgentConnectParams_t member that is not const,
+         * and therefore could not be set in the initializer (where
+         * xConnectParameters is declared in this function). */
+        xConnectParameters.usClientIdLength = ( uint16_t ) strlen( ( const char * ) MQTT_CLIENT_ID );
+
+        /* Connect to the broker. */
+        configPRINTF( ( "MQTT client attempting to connect to %s.\n", mqttBrokerEndpointurl ) );
+        xReturned = MQTT_AGENT_Connect( xMQTTHandle,
+                                        &xConnectParameters,
+                                        MQTT_TLS_NEGOTIATION_TIMEOUT );
+
+        if( xReturned != eMQTTAgentSuccess )
+        {
+            /* Could not connect, so delete the MQTT client. */
+            ( void ) MQTT_AGENT_Delete( xMQTTHandle );
+            configPRINTF( ( "ERROR:  MQTT client failed to connect with error %d.\n", xReturned ) );
+        }
+        else
+        {
+            configPRINTF( ( "MQTT client connected.\n" ) );
+            xReturn = pdPASS;
+        }
+    }
+
+	return ( xReturn == pdPASS );
 }
 
-// this method makes a HTTP connection to the server:
-void httpRequest() {
-	char msg[100];
-	int length = 0;
-	// close any connection before send a new request.
-	// This will free the socket on the WiFi module
-	client.stop();
 
-	// if there's a successful connection:
-	if (client.connect(server, 80)) {
-		std::printf("\n\nConnecting to server...\n");
-		// Make a HTTP request:
-		length = snprintf(msg, 100, "GET /search?q=arduino HTTP/1.1\r\n");
-		client.write(msg, length);
-		length = snprintf(msg, 100, "Host: www.google.com\r\n");
-		client.write(msg, length);
-		length = snprintf(msg, 100, "Connection: close\r\n");
-		client.write(msg, length);
-		length = snprintf(msg, 100, "\r\n");
-		client.write(msg, length);
-
-		// note the time that the connection was made:
-		//    lastConnectionTime = millis();
-
-	} else {
-		// if you can't make a connection:
-		std::printf("Connection failed");
-	}
-}
-
-void sendNTPpacket()
+/**
+ * @brief Closes an active MQTT connection.
+ */
+static void cloudDisconnect()
 {
-	// Initialize values needed to form NTP request
-	// (see URL above for details on the packets)
-	std::memset(packetBuffer, 0, NTP_PACKET_SIZE);
-
-	packetBuffer[0] = 0b11100011;   // LI, Version, Mode
-	packetBuffer[1] = 0;     // Stratum, or type of clock
-	packetBuffer[2] = 6;     // Polling Interval
-	packetBuffer[3] = 0xEC;  // Peer Clock Precision
-	// 8 bytes of zero for Root Delay & Root Dispersion
-	packetBuffer[12]  = 49;
-	packetBuffer[13]  = 0x4E;
-	packetBuffer[14]  = 49;
-	packetBuffer[15]  = 52;
-
-	// all NTP fields have been given values, now
-	// you can send a packet requesting a timestamp:
-
-	if( client.write(packetBuffer, NTP_PACKET_SIZE) != NTP_PACKET_SIZE) {
-		std::printf("NTP packet not sent.\n");
-	}
+	MQTT_AGENT_Disconnect( xMQTTHandle, MQTT_TIMEOUT );
+    MQTT_AGENT_Delete( xMQTTHandle );
+    configPRINTF( ( "MQTT client disconnected.\n" ) );
 }
 
-void parseNTPpacket()
+
+/**
+ * @brief Uploads the provided sensor information to the cloud server
+ * @param temperature value to be uploaded
+ * @param humidity value to be uploaded
+ * @param pressure value to be uploaded
+ */
+static void cloudSend(int16_t temperature, uint16_t humidity, uint16_t pressure)
 {
-	//the timestamp starts at byte 40 of the received packet and is four bytes,
-	// or two words, long. First, esxtract the two words:
-	uint32_t secsSince1900 = 0;
-	secsSince1900  = ( (uint32_t)packetBuffer[40] << 24);
-	secsSince1900 |= ( (uint32_t)packetBuffer[41] << 16);
-	secsSince1900 |= ( (uint32_t)packetBuffer[42] <<  8);
-	secsSince1900 |= ( (uint32_t)packetBuffer[43] <<  0);
+    MQTTAgentPublishParams_t xPublishParameters;
 
-    // this is NTP time (seconds since Jan 1 1900):
-//	std::printf("Seconds since Jan 1, 1900 = %lu\n", secsSince1900);
+    /* Format sensor values into a JSON message */
+    uint32_t ret = snprintf(buf, buf_size,
+                "{\"sensor\":{\"temperature\":%i,\"humidity\":%.u,\"pressure\":%u}}",
+                temperature, humidity, pressure);
+    if(ret < 0) {
+    	configPRINTF( ("ERROR: snprintf() returns %lu.", ret) );
+    }
 
-	// now convert NTP time into everyday time (since Jan 1, 1970):
-	static constexpr uint32_t seventyYears = 2208988800UL;
-	uint32_t epoch = secsSince1900 - seventyYears;
-//	std::printf("Unix time = %lu\n", epoch);
 
-	//Display hour, minute, second
-	static constexpr uint32_t SecsPerDay = 86400;
-	static constexpr uint32_t SecsPerHour = 3600;
-	static constexpr uint32_t SecsPerMin = 60;
+    /* Setup the publish parameters. */
+    memset( &( xPublishParameters ), 0x00, sizeof( xPublishParameters ) );
+    xPublishParameters.pucTopic = TOPIC_NAME;
+    xPublishParameters.pvData = buf;
+    xPublishParameters.usTopicLength = ( uint16_t ) strlen( ( const char * ) TOPIC_NAME );
+    xPublishParameters.ulDataLength = ret;
+    xPublishParameters.xQoS = eMQTTQoS1;
 
-	std::printf("UTC time = ");
-	std::printf("%.2lu:", (epoch % SecsPerDay ) / SecsPerHour );
-	std::printf("%.2lu:", (epoch % SecsPerHour) / SecsPerMin );
-	std::printf("%.2lu\n", (epoch % SecsPerMin ) );
+    /* Publish the message. */
+    MQTTAgentReturnCode_t xReturned = MQTT_AGENT_Publish( xMQTTHandle,
+                                    &( xPublishParameters ),
+                                    MQTT_TIMEOUT );
 
-	std::fflush(stdout);
+    if( xReturned != eMQTTAgentSuccess )
+    {
+    	configPRINTF( ("ERROR: xReturned from MQTT publish is %d\n", xReturned) );
+    }
+
+    configPRINTF( ("Message published '%s'\n", buf ) );
 }
+
+
