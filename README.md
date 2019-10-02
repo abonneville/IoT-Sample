@@ -27,7 +27,7 @@ Project specific software documenation is available [here](https://github.com/ab
 
 This demo project was built for the STM32L475VG and installed on the B-L475E-IOT01A1 Discovery Board.
 
-* Install [Atollic TrueSTUDIO](https://atollic.com/truestudio/), v9 or later.
+* Install [ST Microelectronics STM32CubeIDE](https://www.st.com/en/development-tools/stm32cubeide.html), v1.0.2 or later.
 
     (Other Eclipse based toolchains may also work, as long as a gcc cross-compiler is available for STM32.)
 
