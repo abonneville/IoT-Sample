@@ -1,51 +1,23 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : usbd_conf.c
   * @version        : v2.0_Cube
   * @brief          : This file implements the board support package for the USB device library
   ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
+  * @attention
   *
-  * Copyright (c) 2019 STMicroelectronics International N.V. 
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx.h"
@@ -67,7 +39,7 @@
 
 /* USER CODE END PV */
 
-                PCD_HandleTypeDef hpcd_USB_OTG_FS;
+PCD_HandleTypeDef hpcd_USB_OTG_FS;
 void Error_Handler(void);
 
 /* USER CODE BEGIN 0 */
@@ -88,8 +60,6 @@ extern USBD_StatusTypeDef USBD_LL_BatteryCharging(USBD_HandleTypeDef *pdev);
 static void SystemClockConfig_Resume(void);
 
 /* USER CODE END 1 */
-
-void HAL_PCDEx_SetConnectionState(PCD_HandleTypeDef *hpcd, uint8_t state);
 extern void SystemClock_Config(void);
 
 /*******************************************************************************
@@ -99,13 +69,14 @@ extern void SystemClock_Config(void);
 
 void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
 {
-  GPIO_InitTypeDef GPIO_InitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(pcdHandle->Instance==USB_OTG_FS)
   {
   /* USER CODE BEGIN USB_OTG_FS_MspInit 0 */
 
   /* USER CODE END USB_OTG_FS_MspInit 0 */
   
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     /**USB_OTG_FS GPIO Configuration    
     PA11     ------> USB_OTG_FS_DM
     PA12     ------> USB_OTG_FS_DP 
@@ -183,7 +154,11 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle)
   * @param  hpcd: PCD handle
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
+#else
 void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   USBD_LL_SetupStage((USBD_HandleTypeDef*)hpcd->pData, (uint8_t *)hpcd->Setup);
 }
@@ -194,7 +169,11 @@ void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
   * @param  epnum: Endpoint number
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+#else
 void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   USBD_LL_DataOutStage((USBD_HandleTypeDef*)hpcd->pData, epnum, hpcd->OUT_ep[epnum].xfer_buff);
 }
@@ -205,7 +184,11 @@ void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
   * @param  epnum: Endpoint number
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+#else
 void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   USBD_LL_DataInStage((USBD_HandleTypeDef*)hpcd->pData, epnum, hpcd->IN_ep[epnum].xfer_buff);
 }
@@ -215,7 +198,11 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
   * @param  hpcd: PCD handle
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_SOFCallback(PCD_HandleTypeDef *hpcd)
+#else
 void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   USBD_LL_SOF((USBD_HandleTypeDef*)hpcd->pData);
 }
@@ -225,23 +212,21 @@ void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
+#else
 void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 { 
   USBD_SpeedTypeDef speed = USBD_SPEED_FULL;
 
-  /* Set USB current speed. */
-  switch (hpcd->Init.speed)
+  if ( hpcd->Init.speed != PCD_SPEED_FULL)
   {
-  case PCD_SPEED_FULL:
-    speed = USBD_SPEED_FULL;
-    break;
-	
-  default:
-    speed = USBD_SPEED_FULL;
-    break;    
+    Error_Handler();
   }
+    /* Set Speed. */
   USBD_LL_SetSpeed((USBD_HandleTypeDef*)hpcd->pData, speed);
-  
+
   /* Reset Device. */
   USBD_LL_Reset((USBD_HandleTypeDef*)hpcd->pData);
 }
@@ -252,7 +237,11 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
+#else
 void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   __HAL_PCD_GATE_PHYCLOCK(hpcd);
   /* Inform USB library that core enters in suspend Mode. */
@@ -273,7 +262,11 @@ void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
+#else
 void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   __HAL_PCD_UNGATE_PHYCLOCK(hpcd);
 
@@ -294,7 +287,11 @@ void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
   * @param  epnum: Endpoint number
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+#else
 void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   USBD_LL_IsoOUTIncomplete((USBD_HandleTypeDef*)hpcd->pData, epnum);
 }
@@ -305,7 +302,11 @@ void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
   * @param  epnum: Endpoint number
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+#else
 void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   USBD_LL_IsoINIncomplete((USBD_HandleTypeDef*)hpcd->pData, epnum);
 }
@@ -315,7 +316,11 @@ void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
   * @param  hpcd: PCD handle
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
+#else
 void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   USBD_LL_DevConnected((USBD_HandleTypeDef*)hpcd->pData);
 }
@@ -325,7 +330,11 @@ void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+static void PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
+#else
 void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
 {
   USBD_LL_DevDisconnected((USBD_HandleTypeDef*)hpcd->pData);
 }
@@ -351,7 +360,6 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   hpcd_USB_OTG_FS.Instance = USB_OTG_FS;
   hpcd_USB_OTG_FS.Init.dev_endpoints = 6;
   hpcd_USB_OTG_FS.Init.speed = PCD_SPEED_FULL;
-  hpcd_USB_OTG_FS.Init.ep0_mps = DEP0CTL_MPS_64;
   hpcd_USB_OTG_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
   hpcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
   hpcd_USB_OTG_FS.Init.low_power_enable = DISABLE;
@@ -364,6 +372,21 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
     Error_Handler( );
   }
 
+#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
+  /* Register USB PCD CallBacks */
+  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_FS, HAL_PCD_SOF_CB_ID, PCD_SOFCallback);
+  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_FS, HAL_PCD_SETUPSTAGE_CB_ID, PCD_SetupStageCallback);
+  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_FS, HAL_PCD_RESET_CB_ID, PCD_ResetCallback);
+  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_FS, HAL_PCD_SUSPEND_CB_ID, PCD_SuspendCallback);
+  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_FS, HAL_PCD_RESUME_CB_ID, PCD_ResumeCallback);
+  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_FS, HAL_PCD_CONNECT_CB_ID, PCD_ConnectCallback);
+  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_FS, HAL_PCD_DISCONNECT_CB_ID, PCD_DisconnectCallback);
+
+  HAL_PCD_RegisterDataOutStageCallback(&hpcd_USB_OTG_FS, PCD_DataOutStageCallback);
+  HAL_PCD_RegisterDataInStageCallback(&hpcd_USB_OTG_FS, PCD_DataInStageCallback);
+  HAL_PCD_RegisterIsoOutIncpltCallback(&hpcd_USB_OTG_FS, PCD_ISOOUTIncompleteCallback);
+  HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_OTG_FS, PCD_ISOINIncompleteCallback);
+#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x80);
@@ -768,7 +791,6 @@ uint32_t USBD_LL_GetRxDataSize(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   return HAL_PCD_EP_GetRxCount((PCD_HandleTypeDef*) pdev->pData, ep_addr);
 }
 
-#if (USBD_LPM_ENABLED == 1)
 /**
   * @brief  Send LPM message to user layer
   * @param  hpcd: PCD handle
@@ -782,7 +804,7 @@ void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
   case PCD_LPM_L0_ACTIVE:
     if (hpcd->Init.low_power_enable)
     {
-      SystemClock_Config();
+      SystemClockConfig_Resume();
       
       /* Reset SLEEPDEEP bit of Cortex System Control Register. */
       SCB->SCR &= (uint32_t)~((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
@@ -804,7 +826,6 @@ void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef msg)
     break;   
   }
 }
-#endif /* (USBD_LPM_ENABLED == 1) */
 
 /**
   * @brief  Delays routine for the USB Device Library.
@@ -848,47 +869,5 @@ static void SystemClockConfig_Resume(void)
   SystemClock_Config();
 }
 /* USER CODE END 5 */
-
-/**
-  * @brief Software device connection
-  * @param hpcd: PCD handle
-  * @param state: Connection state (0: disconnected / 1: connected)
-  * @retval None
-  */
-void HAL_PCDEx_SetConnectionState(PCD_HandleTypeDef *hpcd, uint8_t state)
-{
-  /* USER CODE BEGIN 6 */
-  if (state == 1)
-  {
-    /* Configure Low connection state. */
-
-  }
-  else
-  {
-    /* Configure High connection state. */
-
-  }
-  /* USER CODE END 6 */
-}
-
-/**
-  * @brief  Verify if the Battery Charging Detection mode (BCD) is used :
-  *         return USBD_OK if true
-  *         else return USBD_FAIL if false
-  * @param  pdev: Device handle
-  * @retval USBD status
-  */
-USBD_StatusTypeDef USBD_LL_BatteryCharging(USBD_HandleTypeDef *pdev)
-{
-  PCD_HandleTypeDef *hpcd = (PCD_HandleTypeDef*)pdev->pData;
-  if (hpcd->Init.battery_charging_enable == ENABLE)
-  {
-    return USBD_OK;
-  }
-  else
-  {
-    return USBD_FAIL;
-  }
-}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -6,39 +6,13 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics International N.V.
+  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice,
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other
-  *    contributors to this software may be used to endorse or promote products
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under
-  *    this license is void and will automatically terminate your rights under
-  *    this license.
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                      http://www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -129,48 +103,48 @@
 #define  USB_REQ_SET_INTERFACE                          0x0BU
 #define  USB_REQ_SYNCH_FRAME                            0x0CU
 
-#define  USB_DESC_TYPE_DEVICE                              1U
-#define  USB_DESC_TYPE_CONFIGURATION                       2U
-#define  USB_DESC_TYPE_STRING                              3U
-#define  USB_DESC_TYPE_INTERFACE                           4U
-#define  USB_DESC_TYPE_ENDPOINT                            5U
-#define  USB_DESC_TYPE_DEVICE_QUALIFIER                    6U
-#define  USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION           7U
-#define  USB_DESC_TYPE_BOS                                 0x0FU
+#define  USB_DESC_TYPE_DEVICE                           0x01U
+#define  USB_DESC_TYPE_CONFIGURATION                    0x02U
+#define  USB_DESC_TYPE_STRING                           0x03U
+#define  USB_DESC_TYPE_INTERFACE                        0x04U
+#define  USB_DESC_TYPE_ENDPOINT                         0x05U
+#define  USB_DESC_TYPE_DEVICE_QUALIFIER                 0x06U
+#define  USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION        0x07U
+#define  USB_DESC_TYPE_BOS                              0x0FU
 
-#define USB_CONFIG_REMOTE_WAKEUP                           2U
-#define USB_CONFIG_SELF_POWERED                            1U
+#define USB_CONFIG_REMOTE_WAKEUP                        0x02U
+#define USB_CONFIG_SELF_POWERED                         0x01U
 
-#define USB_FEATURE_EP_HALT                                0U
-#define USB_FEATURE_REMOTE_WAKEUP                          1U
-#define USB_FEATURE_TEST_MODE                              2U
+#define USB_FEATURE_EP_HALT                             0x00U
+#define USB_FEATURE_REMOTE_WAKEUP                       0x01U
+#define USB_FEATURE_TEST_MODE                           0x02U
 
-#define USB_DEVICE_CAPABITY_TYPE                           0x10U
+#define USB_DEVICE_CAPABITY_TYPE                        0x10U
 
-#define USB_HS_MAX_PACKET_SIZE                            512
-#define USB_FS_MAX_PACKET_SIZE                            64
-#define USB_MAX_EP0_SIZE                                  64U
+#define USB_HS_MAX_PACKET_SIZE                          512U
+#define USB_FS_MAX_PACKET_SIZE                          64U
+#define USB_MAX_EP0_SIZE                                64U
 
 /*  Device Status */
-#define USBD_STATE_DEFAULT                                1U
-#define USBD_STATE_ADDRESSED                              2U
-#define USBD_STATE_CONFIGURED                             3U
-#define USBD_STATE_SUSPENDED                              4U
+#define USBD_STATE_DEFAULT                              0x01U
+#define USBD_STATE_ADDRESSED                            0x02U
+#define USBD_STATE_CONFIGURED                           0x03U
+#define USBD_STATE_SUSPENDED                            0x04U
 
 
 /*  EP0 State */
-#define USBD_EP0_IDLE                                     0U
-#define USBD_EP0_SETUP                                    1U
-#define USBD_EP0_DATA_IN                                  2U
-#define USBD_EP0_DATA_OUT                                 3U
-#define USBD_EP0_STATUS_IN                                4U
-#define USBD_EP0_STATUS_OUT                               5U
-#define USBD_EP0_STALL                                    6U
+#define USBD_EP0_IDLE                                   0x00U
+#define USBD_EP0_SETUP                                  0x01U
+#define USBD_EP0_DATA_IN                                0x02U
+#define USBD_EP0_DATA_OUT                               0x03U
+#define USBD_EP0_STATUS_IN                              0x04U
+#define USBD_EP0_STATUS_OUT                             0x05U
+#define USBD_EP0_STALL                                  0x06U
 
-#define USBD_EP_TYPE_CTRL                                 0U
-#define USBD_EP_TYPE_ISOC                                 1U
-#define USBD_EP_TYPE_BULK                                 2U
-#define USBD_EP_TYPE_INTR                                 3U
+#define USBD_EP_TYPE_CTRL                               0x00U
+#define USBD_EP_TYPE_ISOC                               0x01U
+#define USBD_EP_TYPE_BULK                               0x02U
+#define USBD_EP_TYPE_INTR                               0x03U
 
 
 /**

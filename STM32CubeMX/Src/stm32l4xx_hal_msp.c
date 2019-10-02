@@ -110,7 +110,6 @@ void HAL_MspInit(void)
 */
 void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(hi2c->Instance==I2C2)
   {
@@ -186,10 +185,8 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
 * @param hi2c: I2C handle pointer
 * @retval None
 */
-
 void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
 {
-
   if(hi2c->Instance==I2C2)
   {
   /* USER CODE BEGIN I2C2_MspDeInit 0 */
@@ -226,7 +223,6 @@ void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
 */
 void HAL_RNG_MspInit(RNG_HandleTypeDef* hrng)
 {
-
   if(hrng->Instance==RNG)
   {
   /* USER CODE BEGIN RNG_MspInit 0 */
@@ -247,10 +243,8 @@ void HAL_RNG_MspInit(RNG_HandleTypeDef* hrng)
 * @param hrng: RNG handle pointer
 * @retval None
 */
-
 void HAL_RNG_MspDeInit(RNG_HandleTypeDef* hrng)
 {
-
   if(hrng->Instance==RNG)
   {
   /* USER CODE BEGIN RNG_MspDeInit 0 */
@@ -273,7 +267,6 @@ void HAL_RNG_MspDeInit(RNG_HandleTypeDef* hrng)
 */
 void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(hspi->Instance==SPI3)
   {
@@ -319,10 +312,8 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
 * @param hspi: SPI handle pointer
 * @retval None
 */
-
 void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
 {
-
   if(hspi->Instance==SPI3)
   {
   /* USER CODE BEGIN SPI3_MspDeInit 0 */
