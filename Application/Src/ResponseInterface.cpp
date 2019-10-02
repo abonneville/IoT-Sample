@@ -96,6 +96,7 @@ void ResponseInterface::Run()
 			WifiStatusHandler();
 			break;
 
+		case RESPONSE_MSG_INVALID:
 		default:
 			InvalidHandler();
 			break;
@@ -270,6 +271,7 @@ void ResponseInterface::WifiStatusHandler()
 		std::printf("Auto\n");
 		break;
 
+	case enl::WiFiSecurityType::Unknown:
 	default:
 		std::printf("Unknown\n");
 		break;

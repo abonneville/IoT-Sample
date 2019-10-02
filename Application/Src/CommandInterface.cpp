@@ -91,7 +91,6 @@ void CommandInterface::Run()
 	FILE *handle = std::freopen(Device.std_in, "r", stdin);
 	app_SetBuffer(handle);
 
-	Buffer_t::const_iterator cmdBegin;
 	Buffer_t::const_iterator lineEnd;
 	ResponseId_t responseId;
 
@@ -191,7 +190,7 @@ ResponseId_t CommandInterface::CloudCmdHandler(Buffer_t::const_iterator first, B
 			 */
 			std::unique_ptr<UserConfig::Cert_t> newCert = std::make_unique<UserConfig::Cert_t>();
 
-			newCert->size = RxPEMObject(newCert->value.data(), newCert->value.size() );
+			newCert->size = RxPEMObject(newCert->value.data(), (uint16_t)newCert->value.size() );
 
 			if ( newCert->size > 0 ) {
 				if (userConfigHandle.SetCloudCert(std::move(newCert)) == true) {
@@ -211,7 +210,7 @@ ResponseId_t CommandInterface::CloudCmdHandler(Buffer_t::const_iterator first, B
 			 */
 			std::unique_ptr<UserConfig::Key_t> newKey = std::make_unique<UserConfig::Key_t>();
 
-			newKey->size = RxPEMObject(newKey->value.data(), newKey->value.size() );
+			newKey->size = RxPEMObject(newKey->value.data(), (uint16_t)newKey->value.size() );
 
 			if ( newKey->size > 0 ) {
 				if (userConfigHandle.SetCloudKey(std::move(newKey)) == true) {
@@ -370,11 +369,11 @@ ResponseId_t CommandInterface::WifiCmdHandler(Buffer_t::const_iterator first, Bu
  * @param   length is the maximum number of bytes that will fit in buffer
  * @retval	size of PEM object received, in bytes
  */
-size_t CommandInterface::RxPEMObject(uint8_t *buffer, size_t length)
+uint16_t CommandInterface::RxPEMObject(uint8_t *buffer, uint16_t length)
 {
 	Buffer_t::iterator lineEnd;
-	size_t lineSize = 0;
-	size_t pemSize = 0;
+	int32_t lineSize = 0;
+	int32_t pemSize = 0;
 
 	while (pemSize < length ){
 		std::fgets(commandLineBuffer.begin(), commandLineBuffer.size(), stdin);
@@ -420,7 +419,7 @@ size_t CommandInterface::RxPEMObject(uint8_t *buffer, size_t length)
 
 	}
 
-	return pemSize;
+	return (uint16_t)pemSize;
 }
 
 /**

@@ -248,7 +248,7 @@ static void cloudSend(int16_t temperature, uint16_t humidity, uint16_t pressure)
     MQTTAgentPublishParams_t xPublishParameters;
 
     /* Format sensor values into a JSON message */
-    uint32_t ret = snprintf(buf, buf_size,
+    int32_t ret = snprintf(buf, buf_size,
                 "{\"sensor\":{\"temperature\":%i,\"humidity\":%.u,\"pressure\":%u}}",
                 temperature, humidity, pressure);
     if(ret < 0) {
