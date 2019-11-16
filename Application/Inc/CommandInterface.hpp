@@ -51,7 +51,7 @@ class CommandInterface : public cpp_freertos::Thread
         virtual void Run();
 
     private:
-		size_t RxPEMObject(uint8_t *, size_t );
+		uint16_t RxPEMObject(uint8_t *, uint16_t );
 
 
         Buffer_t commandLineBuffer;

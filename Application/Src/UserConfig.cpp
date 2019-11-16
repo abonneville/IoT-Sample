@@ -266,7 +266,7 @@ extern "C" void GetCloudCert(UCHandle handle, const uint8_t ** cert, const uint1
  */
 extern "C" void GetCloudEndpointUrl(UCHandle handle, const char ** url )
 {
-	static UserConfig::Cloud_t cloud = handle->GetCloudConfig();
+	const UserConfig::Cloud_t & cloud = handle->GetCloudConfig();
 	*url = cloud.EndpointUrl.value.data();
 }
 
@@ -278,7 +278,7 @@ extern "C" void GetCloudEndpointUrl(UCHandle handle, const char ** url )
  */
 extern "C" void GetCloudThingName(UCHandle handle, const char ** name )
 {
-	static UserConfig::Cloud_t cloud = handle->GetCloudConfig();
+	const UserConfig::Cloud_t & cloud = handle->GetCloudConfig();
 	*name = cloud.ThingName.value.data();
 }
 

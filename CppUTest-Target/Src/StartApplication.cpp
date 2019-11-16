@@ -1009,7 +1009,7 @@ TEST(uConfig, Invalid)
 	const UserConfig::Cloud_t &cloud = testConfig.GetCloudConfig();
 	const UserConfig::Wifi_t &wifi = testConfig.GetWifiConfig();
 
-	std::memset(bigTest, 0x00, UserConfig::TableSize);
+	std::memset(bigTest, 0x00, sizeof(bigTest));
 	CHECK_EQUAL(std::memcmp(bigTest, &cloud, sizeof(UserConfig::Cloud_t)), 0);
 	CHECK_EQUAL(std::memcmp(bigTest, &wifi, sizeof(UserConfig::Wifi_t)), 0);
 }

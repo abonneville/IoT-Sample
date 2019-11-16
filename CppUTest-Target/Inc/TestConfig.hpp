@@ -27,8 +27,9 @@
 
 #include <cstdio>
 
+#include "UserConfig.hpp"
 
-#define BIG_DATA_SIZE ( BUFSIZ * 3 )
+#define BIG_DATA_SIZE ( UserConfig::TableSize )
 
 
 

@@ -53,7 +53,8 @@ static constexpr char tcpServer[] = "www.google.com";
 static constexpr unsigned int tcpPort = 80;
 
 /* UDP Client */
-static constexpr char udpServer[] = "0.us.pool.ntp.org";
+static constexpr char udpServer[] = "pool.ntp.org";
+//static constexpr char udpServer[] = "time.nist.gov";
 static constexpr unsigned int udpPort = 123;
 static constexpr int NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
 
@@ -63,14 +64,50 @@ static void sendNTPpacket();
 
 /* External functions ------------------------------------------------*/
 
-TEST_GROUP(wifi) {};
+TEST_GROUP(wifi)
+{
+	void setup()
+	{
+		/* Each time a WiFi connection is established, it takes 4+ seconds to complete. To minimize impact
+		 * on overall test time, a connection will be established here and not disconnected during test
+		 * teardown(). WiFi disconnect will be evaluated under a separate test module.
+		 */
+		if ( enl::WiFiStatus::WL_DISCONNECTED == WiFi.status() )
+		{
+			/* Connect to the network via WiFi */
+			CHECK( enl::WiFiStatus::WL_DISCONNECTED == WiFi.status() );
+			CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.begin(ssid, password, enl::WiFiSecurityType::WPA2) );
+			CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.status() );
+			/* Just repeating to verify behavior */
+			CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.begin(ssid, password, enl::WiFiSecurityType::WPA2) );
+			CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.status() );
+		}
+	}
+
+	void teardown()
+	{
+	}
+
+};
 
 TEST_GROUP(WiFiClient) {
 	void setup()
 	{
-		/* Connect to network via WiFi */
-		CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.begin(ssid, password, enl::WiFiSecurityType::WPA2) );
-		CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.status() );
+		/* Each time a WiFi connection is established, it takes 4+ seconds to complete. To minimize impact
+		 * on overall test time, a connection will be established here and not disconnected during test
+		 * teardown(). WiFi disconnect will be evaluated under a separate test module.
+		 */
+		if ( enl::WiFiStatus::WL_DISCONNECTED == WiFi.status() )
+		{
+			/* Connect to the network via WiFi */
+			CHECK( enl::WiFiStatus::WL_DISCONNECTED == WiFi.status() );
+			CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.begin(ssid, password, enl::WiFiSecurityType::WPA2) );
+			CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.status() );
+			/* Just repeating to verify behavior */
+			CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.begin(ssid, password, enl::WiFiSecurityType::WPA2) );
+			CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.status() );
+		}
+
 
 		/*
 		 * TCP client
@@ -99,7 +136,6 @@ TEST_GROUP(WiFiClient) {
 		 */
 		tcpClient.stop();
 		udpClient.stop();
-		WiFi.disconnect();
 
 		/* Teardown complete, verify client(s) is disconnected...
 		 */
@@ -110,8 +146,6 @@ TEST_GROUP(WiFiClient) {
 		CHECK( false == udpClient.connected() );
 		CHECK( enl::Status::Disconnected == udpClient.status() );
 		CHECK( false == udpClient );
-
-		CHECK( enl::WiFiStatus::WL_DISCONNECTED == WiFi.status() );
 	}
 };
 
@@ -165,16 +199,8 @@ static void sendNTPpacket()
 
 
 
-TEST(wifi, Connect)
+TEST(wifi, parameters)
 {
-	/* Connect to the network via WiFi */
-	CHECK( enl::WiFiStatus::WL_DISCONNECTED == WiFi.status() );
-	CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.begin(ssid, password, enl::WiFiSecurityType::WPA2) );
-	CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.status() );
-	/* Just repeating to verify behavior */
-	CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.begin(ssid, password, enl::WiFiSecurityType::WPA2) );
-	CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.status() );
-
 	CHECK( enl::WiFiSecurityType::WPA2 == WiFi.encryptionType() );
 
 	/* Ping LAN device to confirm network access */
@@ -215,10 +241,13 @@ TEST(wifi, Connect)
 	/* Get Device Firmware */
 	const char fwCheck[] { "C3.5.2.5.STM" };
 	STRNCMP_EQUAL( fwCheck, WiFi.firmwareVersion(), sizeof(fwCheck) );
+}
 
 
+TEST(wifi, disconnect)
+{
 	/* Post test cleanup */
-	CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.status() );
+	CHECK( enl::WiFiStatus::WL_DISCONNECTED != WiFi.status() );
 	WiFi.disconnect();
 	CHECK( enl::WiFiStatus::WL_DISCONNECTED == WiFi.status() );
 }
@@ -226,9 +255,6 @@ TEST(wifi, Connect)
 
 TEST(wifi, scanNetwork)
 {
-	/* Connect to the network via WiFi */
-	CHECK( enl::WiFiStatus::WL_CONNECTED == WiFi.begin(ssid, password, enl::WiFiSecurityType::WPA2) );
-
 	/* Verify which network we are connected to */
 	STRNCMP_EQUAL ( ssid, WiFi.SSID(), sizeof(ssid) );
 
@@ -261,12 +287,6 @@ TEST(wifi, scanNetwork)
 	/* Verify the security type is reportable from scan list */
 	enl::WiFiSecurityType type = WiFi.encryptionType( 0 );
 	CHECK( type != enl::WiFiSecurityType::Unknown );
-
-
-
-
-	WiFi.disconnect();
-	CHECK( enl::WiFiStatus::WL_DISCONNECTED == WiFi.status() );
 }
 
 
